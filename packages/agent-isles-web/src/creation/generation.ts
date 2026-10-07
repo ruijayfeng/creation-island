@@ -23,7 +23,7 @@ export class Generator {
       }
     }
     if(!stopped)throw new Problem('invalidOutput')
-    return JSON.parse(output.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'')) as Record<string,unknown>
+    return output.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'')
   }
   private async run(){this.active=true
     try {let next:Job|undefined
@@ -36,20 +36,22 @@ export class Generator {
           const prompt=protocol+'\nCONTEXT_DATA:\n'+JSON.stringify({current:base,target:job.target,conversation:w.history.slice(-8),request:job.request})
           let candidate:Content|undefined,questionText:string|undefined,repair=''
           for(let attempt=0;attempt<2;attempt++){
-            const result=await this.call(prompt+repair,controller)
+            const raw=await this.call(prompt+repair,controller)
             update(j=>{j.status='validating'})
             try{
+              const result=JSON.parse(raw) as Record<string,unknown>
+              if(!result||typeof result!=='object')throw new Error('Expected JSON object')
               if(result.type==='clarify'){if(typeof result.question!=='string'||!result.question.trim()||result.question.length>2000)throw new Error('Invalid clarification');questionText=result.question;break}
               if(result.type==='create'){if(job.target!=='all')throw new Error('Local scope requires modify');candidate=complete(result.data)}
               else if(result.type==='modify')candidate=modify(base,result.operations,job.target)
               else throw new Error('Unknown response type')
               if(candidate.kind!==base.kind)throw new Error('Cannot change work kind')
               break
-            }catch(e){if(attempt)throw new Problem('invalidOutput');repair='\nYour previous response was invalid. Repair once.\n'+JSON.stringify({response:result,errors:String(e)})}
+            }catch(e){if(attempt)throw new Problem('invalidOutput');repair='\nYour previous response was invalid. Repair once.\n'+JSON.stringify({response:raw,errors:String(e)})}
           }
           if(controller.signal.aborted)throw new Problem('cancelled')
           this.store.change(s=>{const j=s.jobs.find(j=>j.id===job.id),current=s.works.find(w=>w.id===job.workId);if(!j||j.status==='cancelled')return;if(!current||current.deleted||current.revision!==job.revision){j.status='failed';j.error='conflict';return}j.status='ready';j.candidate=candidate;j.question=questionText;j.summary=candidate?changes(base,candidate).join(', '):undefined;if(questionText)current.history.push({role:'assistant',text:questionText});current.history=current.history.slice(-20)})
-        }catch(e){update(j=>{j.status=controller.signal.aborted?'failed':'failed';j.error=controller.signal.aborted?'timeout':e instanceof Problem?e.code:'model'})}
+        }catch(e){update(j=>{j.status='failed';j.error=controller.signal.aborted?'timeout':e instanceof Problem?e.code:'model'})}
         finally{clearTimeout(timer);this.controllers.delete(job.id)}
       }
     } finally{this.active=false}

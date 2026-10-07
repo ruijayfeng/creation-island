@@ -105,7 +105,7 @@ export async function serveWorld(req: IncomingMessage, res: ServerResponse, worl
 export function apply(ctx: Context & ModelTestServices): void {
   ctx.plugin(tutorial)
   ctx.plugin(projectFiles)
-  for (const file of ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'q-portrait.png', 'file-keeper-portrait.png', 'teacher-portrait.png', 'site.webmanifest']) {
+  for (const file of ['creation-island.svg', 'favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'q-portrait.png', 'file-keeper-portrait.png', 'teacher-portrait.png', 'site.webmanifest']) {
     ctx.effect(() => ctx.webServer.register({
       kind: 'exact', path: `/agent-isles/brand/${file}`,
       handler: async (req, res) => {
@@ -113,7 +113,7 @@ export function apply(ctx: Context & ModelTestServices): void {
         try {
           const content = await readFile(new URL(`../brand/${file}`, import.meta.url))
           res.writeHead(200, {
-            'content-type': file.endsWith('.png') ? 'image/png' : file.endsWith('.ico') ? 'image/x-icon' : 'application/manifest+json',
+            'content-type': file.endsWith('.svg') ? 'image/svg+xml' : file.endsWith('.png') ? 'image/png' : file.endsWith('.ico') ? 'image/x-icon' : 'application/manifest+json',
             'content-length': content.length, 'cache-control': 'no-cache',
           })
           res.end(req.method === 'HEAD' ? undefined : content)

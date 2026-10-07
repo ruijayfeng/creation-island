@@ -106,6 +106,7 @@ var regions_error := false
 var regions_installing := false
 var web_lightweight := false
 var distance_haze: ShaderMaterial
+var creation_showcase: Node3D
 
 
 func _ready() -> void:
@@ -114,6 +115,9 @@ func _ready() -> void:
 	_setup_input()
 	_build_world()
 	_build_player()
+	creation_showcase = preload("res://scripts/creation_showcase.gd").new()
+	add_child(creation_showcase)
+	creation_showcase.selected.connect(func(slot: int): _emit_agent_isles("showcase:selected", {"slot": slot}))
 	_build_distance_haze()
 	environment_details = ENVIRONMENT_DETAILS.new()
 	add_child(environment_details)
@@ -215,6 +219,9 @@ func _on_agent_isles_message(arguments: Array) -> void:
 		return
 	var message := parsed as Dictionary
 	if message.get("source") != "agent-isles-host" or int(message.get("version", 0)) != 1:
+		return
+	if message.get("type") == "creation:showcase":
+		creation_showcase.update_slots(message.get("payload"))
 		return
 	if message.get("type") == "world:locale":
 		_set_world_locale(str(message.get("payload", {}).get("locale", "zh")))
@@ -876,6 +883,8 @@ func place_echo() -> bool:
 
 func _interact() -> void:
 	if game_paused or agent_isles_panel_open or sanctuary_computer.active:
+		return
+	if creation_showcase.interact(player.global_position):
 		return
 	if sanctuary_computer.can_use():
 		if embedded_mode or agent_isles_connected:

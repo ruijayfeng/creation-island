@@ -8,7 +8,9 @@
 
 GitHub 仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creation-island)，默认分支为 `main`，公开仓库。
 
-当前包含产品与开发文档、文件忽略规则及编辑器格式约定。下一步按[源码基线与导入](docs/source-baseline.md)导入选定的公开 MIT 快照，保留来源许可，再安装固定依赖并准备构建入口。现阶段尚无可运行的新产品，不使用原项目的构建或验收结果代表创作岛。
+已导入公开 MIT 基线，三类作品的创作、编辑、版本、收藏及导出已接入。当前实现与验收状态见[开发进度](docs/progress.md)，应用操作见[使用说明](docs/user-guide.md)。
+
+开发环境使用 Node.js `^22.19.0` 或 `>=24.0.0` 及 Corepack Yarn `4.18.0`：先运行 `corepack yarn install --immutable`，再运行 `corepack yarn dev:web`。世界导出需要 Godot，运行 `corepack yarn build:world`。macOS ARM64 候选包通过 `corepack yarn build:desktop:darwin` 生成。
 
 ## 文档入口
 

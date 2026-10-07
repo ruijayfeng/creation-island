@@ -1,0 +1,65 @@
+extends Node3D
+## Six reusable pedestals. Host owns the works; the world only projects saved slots.
+signal selected(slot: int)
+var bodies: Array[StaticBody3D] = []
+var labels: Array[Label3D] = []
+var materials: Array[StandardMaterial3D] = []
+var occupied: Array[bool] = []
+
+func _ready() -> void:
+	for i in range(6):
+		var body := StaticBody3D.new()
+		body.position = Vector3(-5.0 + i * 2.0, 0.35, 8.0)
+		var mesh := MeshInstance3D.new()
+		var cylinder := CylinderMesh.new()
+		cylinder.top_radius = 0.45
+		cylinder.bottom_radius = 0.55
+		cylinder.height = 0.7
+		mesh.mesh = cylinder
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color("97ac99")
+		mesh.material_override = material
+		body.add_child(mesh)
+		var collision := CollisionShape3D.new()
+		var shape := CylinderShape3D.new()
+		shape.radius = 0.55
+		shape.height = 0.7
+		collision.shape = shape
+		body.add_child(collision)
+		var label := Label3D.new()
+		label.text = "%02d" % (i + 1)
+		label.position.y = 0.8
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.font_size = 40
+		label.modulate = Color("fff4d4")
+		body.add_child(label)
+		body.input_event.connect(func(_camera: Node, event: InputEvent, _position: Vector3, _normal: Vector3, _shape: int):
+			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+				selected.emit(i)
+		)
+		add_child(body)
+		bodies.append(body)
+		labels.append(label)
+		materials.append(material)
+		occupied.append(false)
+
+func update_slots(value: Variant) -> void:
+	if typeof(value) != TYPE_ARRAY or value.size() != 6:
+		return
+	for i in range(6):
+		var item: Variant = value[i]
+		if item == null:
+			occupied[i] = false
+			labels[i].text = "%02d" % (i + 1)
+			materials[i].albedo_color = Color("97ac99")
+		elif typeof(item) == TYPE_DICTIONARY and item.get("kind") in ["quiz", "card", "story"] and item.get("theme") in ["fresh", "celebration", "night"]:
+			occupied[i] = true
+			labels[i].text = "%02d · %s" % [i + 1, str(item.kind).to_upper()]
+			materials[i].albedo_color = {"fresh": Color("287b6f"), "celebration": Color("d79b85"), "night": Color("294c66")}[item.theme]
+
+func interact(position: Vector3) -> bool:
+	for i in range(6):
+		if position.distance_to(bodies[i].global_position) < 1.7:
+			selected.emit(i)
+			return true
+	return false

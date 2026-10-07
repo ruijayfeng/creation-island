@@ -20,6 +20,7 @@ export interface ResidentView {
 }
 
 export type HostToWorldMessage =
+  | { source: 'agent-isles-host'; version: typeof WORLD_BRIDGE_VERSION; type: 'creation:showcase'; payload: ({kind: 'quiz'|'card'|'story'; theme: 'fresh'|'celebration'|'night'}|null)[] }
   | { source: 'agent-isles-host'; version: typeof WORLD_BRIDGE_VERSION; type: 'tutorial:keeper'; payload: { encounterId: string; action: 'arrive' | 'home' | 'cancel'; reducedMotion: boolean } }
   | {
       source: 'agent-isles-host'
@@ -58,6 +59,7 @@ export type HostToWorldMessage =
     }
 
 export type WorldToHostMessage =
+  | { source: 'agent-isles-world'; version: typeof WORLD_BRIDGE_VERSION; type: 'showcase:selected'; payload: {slot:number} }
   | { source: 'agent-isles-world'; version: typeof WORLD_BRIDGE_VERSION; type: 'tutorial:keeper'; payload: { encounterId: string; status: 'arrived' | 'home' | 'cancelled' } }
   | { source: 'agent-isles-world'; version: typeof WORLD_BRIDGE_VERSION; type: 'world:ready' | 'world:playable' }
   | { source: 'agent-isles-world'; version: typeof WORLD_BRIDGE_VERSION; type: 'world:regions'; payload: RegionLoadState }
@@ -72,6 +74,7 @@ export function isWorldToHostMessage(value: unknown): value is WorldToHostMessag
   if (typeof value !== 'object' || value === null) return false
   const message = value as Partial<WorldToHostMessage>
   if (message.source !== 'agent-isles-world' || message.version !== WORLD_BRIDGE_VERSION) return false
+  if (message.type === 'showcase:selected') return !!message.payload && Number.isInteger(message.payload.slot) && message.payload.slot >= 0 && message.payload.slot < 6
   if (message.type === 'tutorial:keeper') return !!message.payload && typeof message.payload.encounterId === 'string' && /^[\w-]{1,160}$/.test(message.payload.encounterId) && ['arrived', 'home', 'cancelled'].includes(message.payload.status)
   if (message.type === 'world:ready' || message.type === 'world:playable') return true
   if (message.type === 'world:regions') {

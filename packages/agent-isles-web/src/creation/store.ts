@@ -54,7 +54,10 @@ export class Store {
       case 'generate': {
         if(s.jobs.some(j=>j.workId===w.id&&['queued','generating','validating'].includes(j.status)))throw new Problem('busy',409)
         if(typeof p.request!=='string'||!p.request.trim()||p.request.length>6000)throw new Problem('format')
-        const j:Job={id:uid(),workId:w.id,revision:w.revision,status:'queued',request:p.request,target:typeof p.target==='string'?p.target:'all'};s.jobs.push(j);w.history.push({role:'user',text:j.request});w.history=w.history.slice(-20);return j
+        let target=typeof p.target==='string'?p.target:'all'
+        const ordinal=/第([一二三四五六七八九十]|\d+)[道个]?([题段])/.exec(p.request)??/(?:question|section)\s*(\d+)/i.exec(p.request)
+        if(target==='all'&&ordinal){const n=Number(ordinal[1])||'一二三四五六七八九十'.indexOf(ordinal[1])+1;const items=w.draft.kind==='quiz'?w.draft.content.questions:w.draft.kind==='card'?w.draft.content.sections:[];if(items[n-1])target=items[n-1].id}
+        const j:Job={id:uid(),workId:w.id,revision:w.revision,status:'queued',request:p.request,target};s.jobs.push(j);w.history.push({role:'user',text:j.request});w.history=w.history.slice(-20);return j
       }
       case 'cancel': {const j=s.jobs.find(j=>j.id===p.jobId&&j.workId===w.id);if(!j)throw new Problem('notFound',404);j.status='cancelled';return j}
       case 'adopt': {const j=s.jobs.find(j=>j.id===p.jobId&&j.workId===w.id);if(!j||j.status!=='ready'||j.revision!==w.revision||!j.candidate)throw new Problem('conflict',409);w.draft=complete(j.candidate);w.history.push({role:'assistant',text:j.summary??''});invalidate();break}

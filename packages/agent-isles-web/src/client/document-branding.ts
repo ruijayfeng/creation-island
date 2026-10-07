@@ -1,7 +1,7 @@
 const PRODUCT_TITLE = '创作岛 · Creation Island'
 const TITLE_SEPARATOR = ' — '
 
-export const AGENT_ISLES_FAVICON = '/agent-isles/brand/favicon.ico'
+export const AGENT_ISLES_FAVICON = '/agent-isles/brand/creation-island.svg'
 
 export function agentIslesDocumentTitle(title: string): string {
   const separator = title.lastIndexOf(TITLE_SEPARATOR)
@@ -17,7 +17,7 @@ export function applyDocumentBranding(
   const previousTitle = document.title
   const icon = document.createElement('link')
   icon.rel = 'icon'
-  icon.type = 'image/x-icon'
+  icon.type = 'image/svg+xml'
   icon.href = AGENT_ISLES_FAVICON
   icon.dataset.agentIslesBrand = ''
   document.head.append(icon)
