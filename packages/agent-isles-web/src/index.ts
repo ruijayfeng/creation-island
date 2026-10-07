@@ -11,6 +11,7 @@ import { createResidentStateHandler } from './resident-state.js'
 import * as tutorial from './tutorial.js'
 import { createBrowserEntry } from './browser-entry.js'
 import * as projectFiles from './project-files.js'
+import { installCreation } from './creation/routes.js'
 
 export const inject = ['webServer', 'llm', 'agentDefaultModel']
 
@@ -129,6 +130,7 @@ export function apply(ctx: Context & ModelTestServices): void {
     for (const path of ['/', '/index.html']) connectionCtx.effect(() => connectionCtx.webServer.register({ kind: 'exact', path, handler }), `agent-isles-web: browser entry ${path}`)
   })
   const home = resolve(process.env.DSH_HOME ?? '.agent-isles-home')
+  installCreation(ctx, home)
   const residentStateHandler = createResidentStateHandler(resolve(home, 'agent-isles-state.json'))
   const modelTestHandler = createModelTestHandler(ctx)
   ctx.effect(() => ctx.webServer.register({
