@@ -1,4 +1,4 @@
-const PRODUCT_TITLE = 'agent-isles'
+const PRODUCT_TITLE = '创作岛 · Creation Island'
 const TITLE_SEPARATOR = ' — '
 
 export const AGENT_ISLES_FAVICON = '/agent-isles/brand/favicon.ico'

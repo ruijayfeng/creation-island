@@ -9,7 +9,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import { AgentIslesWorld } from './AgentIslesWorld.js'
+import { CreationApp } from './creation/App.js'
 import type { AgentIslesWorldInjected } from './AgentIslesWorld.js'
 import { AgentIslesBrandMark, AgentIslesBrandName, AgentIslesHeroMark } from './Brand.js'
 import { WORLD_STYLES } from './styles.js'
@@ -240,5 +240,5 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
         },
         bindWorkspace: async path => (await ctx.workspaces.create({ path })).workspaceId,
       }),
-    }, AgentIslesWorld))
+    }, CreationApp))
 }
