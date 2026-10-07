@@ -2,11 +2,11 @@
 
 创作岛是一款待开发的本地 AI 陪伴式互动创作产品。用户在小岛中制作问答小游戏、互动贺卡和分支故事，预览和修改后保存版本，并导出给别人独立使用。
 
-**当前状态：开发文档与仓库基础配置已准备，应用源码尚未导入，产品功能尚未开发。** 本目录是后续开发的主工作区；原 isles 仓库保留为来源和参考，Boss 中的旧规划作为历史材料。
+**当前状态：公开 MIT 基线已导入，创作岛功能开发中。** 本目录是后续开发的主工作区；原 isles 仓库保留为来源和参考，Boss 中的旧规划作为历史材料。
 
 ## 仓库与开发起点
 
-GitHub 仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creation-island)，默认分支为 `main`，初始化时设为私有仓库。
+GitHub 仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creation-island)，默认分支为 `main`，公开仓库。
 
 当前包含产品与开发文档、文件忽略规则及编辑器格式约定。下一步按[源码基线与导入](docs/source-baseline.md)导入选定的公开 MIT 快照，保留来源许可，再安装固定依赖并准备构建入口。现阶段尚无可运行的新产品，不使用原项目的构建或验收结果代表创作岛。
 
