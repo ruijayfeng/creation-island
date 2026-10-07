@@ -1,3 +1,5 @@
+> Creation Island: the current target is macOS Apple Silicon. Build with `corepack yarn build:desktop:darwin`, verify with `corepack yarn verify:desktop:darwin`. The bundle embeds an official Node runtime verified against its published SHA-256. App data is isolated under `~/Library/Application Support/Creation Island/data`. The instructions below describe the inherited baseline and are historical.
+
 # agent-isles desktop launcher (local preview)
 
 [简体中文](README.md) · **English**

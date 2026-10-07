@@ -1,13 +1,13 @@
 #!/bin/bash
-# 验收 macOS Intel 便携包：冒烟就绪、退出清进程、单实例、原生模块。
+# 验收 macOS Apple Silicon 便携包：冒烟就绪、退出清进程、单实例、原生模块。
 set -euo pipefail
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "需要在 macOS 上运行" >&2
   exit 1
 fi
-if [[ "$(uname -m)" != "x86_64" ]]; then
-  echo "本预览验收针对 Intel Mac（x86_64）" >&2
+if [[ "$(uname -m)" != "arm64" ]]; then
+  echo "本预览验收针对 Apple Silicon Mac（arm64）" >&2
   exit 1
 fi
 
@@ -17,7 +17,7 @@ if [[ -z "$BUILD_DIRECTORY" ]]; then
 fi
 BUILD_DIRECTORY="$(cd "$BUILD_DIRECTORY" && pwd)"
 APP_ROOT="$BUILD_DIRECTORY/app"
-LAUNCHER="$APP_ROOT/Agent Isles.app/Contents/MacOS/agent-isles"
+LAUNCHER="$APP_ROOT/Creation Island.app/Contents/MacOS/creation-island"
 NODE="$APP_ROOT/runtime/node"
 
 if [[ ! -x "$LAUNCHER" ]]; then

@@ -1,4 +1,4 @@
-// agent-isles macOS Intel 启动器：对标 Windows Launcher.cs —— 单实例、菜单栏、进程树清理、就绪后打开系统浏览器。
+// agent-isles macOS Apple Silicon 启动器：对标 Windows Launcher.cs —— 单实例、菜单栏、进程树清理、就绪后打开系统浏览器。
 import AppKit
 import Foundation
 
@@ -34,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     let dataHome = ProcessInfo.processInfo.environment["AGENT_ISLES_DATA_HOME"]
       ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("agent-isles/data", isDirectory: true).path
+        .appendingPathComponent("Creation Island/data", isDirectory: true).path
     home = URL(fileURLWithPath: dataHome, isDirectory: true)
     try? FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
 
@@ -133,13 +133,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
   private func buildMenuBar() {
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    item.button?.title = "AI"
-    item.button?.toolTip = "agent-isles"
+    item.button?.title = "◒"
+    item.button?.toolTip = "Creation Island"
     let menu = NSMenu()
     menu.addItem(NSMenuItem(title: "打开小岛", action: #selector(openIsland), keyEquivalent: "o"))
     menu.addItem(NSMenuItem(title: "打开日志目录", action: #selector(openLogs), keyEquivalent: "l"))
     menu.addItem(NSMenuItem.separator())
-    menu.addItem(NSMenuItem(title: "退出 agent-isles", action: #selector(quitApp), keyEquivalent: "q"))
+    menu.addItem(NSMenuItem(title: "退出创作岛", action: #selector(quitApp), keyEquivalent: "q"))
     item.menu = menu
     statusItem = item
   }
@@ -151,7 +151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       backing: .buffered,
       defer: false
     )
-    window.title = "agent-isles"
+    window.title = "创作岛 · Creation Island"
     window.center()
     window.isReleasedWhenClosed = false
     window.delegate = self

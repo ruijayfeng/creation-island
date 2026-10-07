@@ -1,6 +1,8 @@
 // 桌面发行：把 Web 插件、世界资源与 node_modules 打进安装根目录（Win/Mac 共用）。
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 
 export const root = fileURLToPath(new URL('../../', import.meta.url))
@@ -42,6 +44,11 @@ export function materializeAppTree(app) {
   copy('apps/web/src/launch.mjs')
   copy('apps/web/src/supervise.mjs')
   copy('apps/desktop/boot.mjs')
+  copy('LICENSE')
+  copy('THIRD_PARTY_NOTICES.md')
+  copy('THIRD_PARTY_NOTICES.en.md')
+  copy('docs/user-guide.md')
+  copy('docs/user-guide.en.md')
   copy('games/mosslight/build/web')
   const web = JSON.parse(readFileSync(path.join(root, 'apps/web/package.json'), 'utf8'))
   writeFileSync(
@@ -52,16 +59,28 @@ export function materializeAppTree(app) {
 }
 
 export async function embedNodeRuntime(app, { binaryName }) {
-  mkdirSync(path.join(app, 'runtime'), { recursive: true })
-  cpSync(process.execPath, path.join(app, 'runtime', binaryName))
-  const licenseCache = path.join(root, 'dist', `node-${process.version}-LICENSE`)
-  if (!existsSync(licenseCache)) {
-    mkdirSync(path.join(root, 'dist'), { recursive: true })
-    const license = await fetch(`https://raw.githubusercontent.com/nodejs/node/${process.version}/LICENSE`, {
-      signal: AbortSignal.timeout(30000),
-    })
-    if (!license.ok) throw new Error('无法读取对应 Node 版本许可证')
-    writeFileSync(licenseCache, await license.text())
+  const version = process.version
+  const archiveName = `node-${version}-darwin-${process.arch}.tar.gz`
+  const cache = path.join(root, 'dist', 'node-runtime')
+  mkdirSync(cache, { recursive: true })
+  const archive = path.join(cache, archiveName)
+  const checksums = path.join(cache, `${version}-SHASUMS256.txt`)
+  for (const [url, target] of [
+    [`https://nodejs.org/dist/${version}/SHASUMS256.txt`, checksums],
+    [`https://nodejs.org/dist/${version}/${archiveName}`, archive],
+  ]) {
+    if (!existsSync(target)) {
+      const result = spawnSync('curl', ['--fail', '--location', '--retry', '2', '--max-time', '120', url, '-o', target], { stdio: 'inherit' })
+      if (result.status !== 0) throw new Error('Official Node runtime download failed')
+    }
   }
-  cpSync(licenseCache, path.join(app, 'runtime/LICENSE'))
+  const expected = readFileSync(checksums, 'utf8').split('\n').find(line => line.endsWith(`  ${archiveName}`))?.split(' ')[0]
+  const actual = createHash('sha256').update(readFileSync(archive)).digest('hex')
+  if (!expected || actual !== expected) throw new Error('Node checksum mismatch')
+  if (spawnSync('tar', ['-xzf', archive, '-C', cache]).status !== 0) throw new Error('Node extraction failed')
+  const extracted = path.join(cache, archiveName.replace(/\.tar\.gz$/, ''))
+  mkdirSync(path.join(app, 'runtime'), { recursive: true })
+  cpSync(path.join(extracted, 'bin/node'), path.join(app, 'runtime', binaryName))
+  cpSync(path.join(extracted, 'LICENSE'), path.join(app, 'runtime/LICENSE'))
+  writeFileSync(path.join(app, 'runtime/SOURCE.json'), JSON.stringify({ version, arch: process.arch, url: `https://nodejs.org/dist/${version}/${archiveName}`, sha256: actual }, null, 2))
 }

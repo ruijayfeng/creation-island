@@ -1,3 +1,5 @@
+> 创作岛当前目标为 macOS Apple Silicon。使用 `corepack yarn build:desktop:darwin` 构建，`corepack yarn verify:desktop:darwin` 验证。包内使用官方 Node 运行时并核对官方 SHA-256，数据隔离在 `~/Library/Application Support/Creation Island/data`。以下为继承基线的历史说明。
+
 # agent-isles 桌面启动器（本地预览版）
 
 **简体中文** · [English](README.en.md)
