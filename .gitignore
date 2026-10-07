@@ -1,0 +1,39 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+.DS_Store
+*.log
+
+# Dependencies and generated output
+node_modules/
+.yarn/*
+!.yarn/patches/
+!.yarn/plugins/
+!.yarn/releases/
+!.yarn/versions/
+.pnp.*
+dist/
+lib/
+coverage/
+*.tsbuildinfo
+.godot/
+
+# Runtime state and local work
+.agent*-home/
+.agent*-test-home/
+.dsh-home-source-run/
+agent*-runtime-test/
+.creation-island-home/
+.creation-island-test-home/
+.birdview/
+.agents/notes/
+tmp/
+
+# Local release and test artifacts
+artifacts/
+test-results/
+playwright-report/
