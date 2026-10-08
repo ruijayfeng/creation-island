@@ -22,6 +22,7 @@ GitHub 仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creat
 | --- | --- |
 | [产品终态与交互规格](docs/product-spec.md) | 最终做成什么，界面和用户行为是什么 |
 | [最终画面与使用体验](docs/product-experience.md) | 岛上各位置、人物、面板、预览和交付如何形成连续体验 |
+| [品牌与角色设计](docs/brand-and-characters.md) | 新角色命名、外观、对白和海岛创作工坊的统一表达 |
 | [方向纠正说明](docs/direction-reset.md) | 哪些保留、哪些退出主流程，旧作品如何兼容，哪些条件待核对 |
 | [现有版本技术结构](docs/architecture.md) | 三类作品版的实现参考；开放项目的新结构尚待设计 |
 | [后续实施边界](docs/implementation-plan.md) | 新方向保留的基础、待改造范围和验证原则 |
