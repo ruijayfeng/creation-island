@@ -1,5 +1,7 @@
 # 创作岛
 
+> **方向更新（2026-10-08）：** 用户已选择回到“小岛主交互的开放式 AI 项目创作”。当前正在整理终态方案，尚未开发；下方可运行版本与使用说明仍属于三类作品版。新方向请先读 [产品终态](docs/product-spec.md)、[最终画面与体验](docs/product-experience.md) 和 [纠正说明](docs/direction-reset.md)，不要把计划当作已有功能。
+
 创作岛是一款本地 AI 陪伴式互动创作产品。用户在小岛中制作问答小游戏、互动贺卡和分支故事，预览和修改后保存版本，并导出给别人独立使用。
 
 **当前状态：0.1.0 开发候选版已实现，已完成本机集中验收，跨设备检查待完成。** 本目录是开发主工作区；原 isles 仓库保留为来源和参考，Boss 中的旧规划作为历史材料。
@@ -19,8 +21,10 @@ GitHub 仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creat
 | 文档 | 解决的问题 |
 | --- | --- |
 | [产品终态与交互规格](docs/product-spec.md) | 最终做成什么，界面和用户行为是什么 |
-| [技术结构与实现约定](docs/architecture.md) | 数据、AI、播放器、界面和小岛如何连接 |
-| [开发执行顺序](docs/implementation-plan.md) | 按什么依赖顺序实现，每一步产出什么 |
+| [最终画面与使用体验](docs/product-experience.md) | 岛上各位置、人物、面板、预览和交付如何形成连续体验 |
+| [方向纠正说明](docs/direction-reset.md) | 哪些保留、哪些退出主流程，旧作品如何兼容，哪些条件待核对 |
+| [现有版本技术结构](docs/architecture.md) | 三类作品版的实现参考；开放项目的新结构尚待设计 |
+| [后续实施边界](docs/implementation-plan.md) | 新方向保留的基础、待改造范围和验证原则 |
 | [视觉与素材方案](docs/assets-and-visuals.md) | 视觉方向、素材制作方式、尺寸和落地位置 |
 | [素材登记表](docs/asset-register.csv) | 来源、许可、采用状态及后续归档 |
 | [统一测试与交付](docs/testing-and-release.md) | 整体开发完成后怎样测试、修复和确认交付 |
