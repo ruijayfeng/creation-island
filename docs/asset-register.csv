@@ -1,7 +1,7 @@
 id,purpose,source,author,license,status,checked_at,local_path,license_path,sha256,notes
 base-world,岛屿和对应基础素材,final-mit-public:games/mosslight/assets/xi4u-LICENSE.txt,AC,MIT,已导入采用,2026-10-08,games/mosslight/assets,games/mosslight/assets/xi4u-LICENSE.txt,,导入时记录许可覆盖的具体文件集合
 base-font,世界固定UI字体,final-mit-public:games/mosslight/assets/fonts/NOTICE.md,Noto Sans SC contributors,OFL-1.1,已导入采用,2026-10-08,games/mosslight/assets/fonts,games/mosslight/assets/fonts/OFL.txt,,有限字符子集不保证覆盖用户任意文本
-base-portraits,角色头像与形象,final-mit-public:games/mosslight,待按具体资源核对,待按文件映射确认,待核对具体资源,2026-10-07,,,,不能把根MIT自动套到所有第三方资源
+base-portraits,角色头像与形象,final-mit-public:games/mosslight,上游 agent-isles contributors,上游仓库声明 MIT,采用公开基线自有角色资源,2026-10-08,assets/brand/*-portrait.png,LICENSE,,公开快照包含角色资源且无单独第三方许可标记；保留上游声明，不主张独立创作这些角色
 icons-lucide,操作图标,https://lucide.dev/license,Lucide and Feather contributors,ISC及部分派生图标MIT,候选未下载,2026-10-07,,,,采用时保留完整适用声明
 ui-kenney,备用界面资源,https://kenney.nl/assets/ui-pack,Kenney,CC0,候选未下载,2026-10-07,,,,仅选择缺少的具体资源
 fx-confetti,庆祝动效候选,https://github.com/catdad/canvas-confetti/blob/master/LICENSE,Kiril Vatev,ISC,候选未引入,2026-10-07,,,,优先现有CSS和Canvas实现

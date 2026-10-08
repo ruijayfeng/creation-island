@@ -1,13 +1,263 @@
-export const words={
-  reveal:['在访达中显示','Show in Finder'],
-  brand:['创作岛','Creation Island'], tagline:['把一个想法，变成一份惊喜。','Small ideas. Playable surprises.'], subtitle:['和 AI 伙伴一起，制作别人真正能玩的作品。','Make something someone can actually play, with your AI companion.'],
-  home:['我的小岛','My island'],library:['我的作品','My works'],inspiration:['灵感手册','Inspiration'],settings:['模型设置','Model settings'],start:['开始创作','Start creating'],continue:['继续上次作品','Continue creating'],light:['轻量视图','Light view'],world:['探索小岛','Explore island'],loading:['小岛正在醒来；你可以直接开始创作。','The island is waking up. You can start creating now.'],worldFailed:['小岛暂时未能加载，创作和收藏仍可使用。','The island is unavailable. Your studio and library are ready.'],
-  quiz:['问答小游戏','Quiz game'],card:['互动贺卡','Greeting card'],story:['分支故事','Branching story'],quizHint:['用几个好问题，开启一场小挑战。','A few good questions. A little challenge.'],cardHint:['一段祝福，一点悬念，一份心意。','A message, a little suspense, a warm surprise.'],storyHint:['每个选择，都通往不同的结局。','Every choice opens another possibility.'],
-  try:['试玩','Play'],make:['制作我的版本','Make my version'],back:['返回小岛','Back to island'],save:['保存版本','Save version'],export:['导出可玩文件','Export playable HTML'],backup:['备份可编辑作品','Back up editable work'],import:['导入作品包','Import work'],title:['作品名称','Title'],theme:['视觉主题','Theme'],fresh:['清新','Fresh'],celebration:['庆祝','Celebration'],night:['夜色','Night'],intro:['开场介绍','Introduction'],ending:['结束语','Closing message'],recipient:['送给谁','Recipient'],signature:['署名','Signature'],text:['内容','Content'],prompt:['题目','Question'],explanation:['答案解释','Explanation'],answer:['正确答案','Correct answer'],add:['添加','Add'],remove:['删除','Remove'],up:['上移','Move up'],down:['下移','Move down'],nodes:['故事节点','Story nodes'],startNode:['起始节点','Start node'],isEnding:['这是一个结局','This is an ending'],choices:['选项','Choices'],target:['前往节点','Target node'],
-  partner:['创作伙伴','Your companion'],brief:['创作卡','Creative brief'],briefHint:['先确认类型和内容，再告诉伙伴作品给谁、想表达什么、喜欢什么风格。','Choose a type, then tell your companion who this is for, what it should say and how it should feel.'],ask:['例如：给朋友做一份轻松的露营问答。','For example: make a cheerful camping quiz for a friend.'],generate:['让伙伴制作 / 修改','Create / revise with AI'],scope:['本次修改范围','Edit scope'],all:['整个作品','Whole work'],scopeHint:['只想改一处时，先选中具体题目、段落或节点。','Choose an item first when you only want to change one part.'],candidate:['候选作品','Proposed work'],adopt:['采用这次修改','Use this change'],discard:['放弃','Discard'],changes:['实际改动','Changes'],cancel:['取消生成','Cancel generation'],retry:['重试','Retry'],queued:['排队中','Queued'],generating:['伙伴正在创作','Creating'],validating:['正在检查内容','Checking'],ready:['等待你的确认','Ready for review'],failed:['这次未能完成','Could not finish'],cancelled:['已取消','Cancelled'],interrupted:['上次创作被中断，可重新发起','Interrupted; you may retry'],
-  editor:['内容与样式','Content & style'],preview:['实时试玩','Live preview'],narrow:['窄屏预览','Narrow preview'],wide:['宽屏预览','Wide preview'],reset:['重新试玩','Restart preview'],saved:['草稿已保存','Draft saved'],saving:['正在保存','Saving'],unsaved:['尚未保存，请重试','Not saved; retry'],invalid:['还有内容需要补充，预览保留上次有效作品。','Some fields need attention. Preview shows the last valid work.'],versions:['历史版本','Versions'],restore:['从此版本继续','Continue from version'],search:['搜索作品名称','Search titles'],allTypes:['全部类型','All types'],trash:['回收站','Recycle bin'],restoreTrash:['还原','Restore'],destroy:['永久删除','Delete permanently'],confirmDestroy:['永久删除后无法恢复，确定继续？','Permanently delete this work? This cannot be undone.'],copy:['复制作品','Duplicate'],edit:['继续编辑','Edit'],empty:['这里还没有作品。先从一个小想法开始吧。','No works yet. Start with a small idea.'],showcase:['岛上的作品展','Island showcase'],slot:['展示位','Display slot'],emptySlot:['等一份新作品','Waiting for a new work'],show:['放入展示位','Put on display'],noVersion:['保存一个版本后即可导出和展示。','Save a version before exporting or displaying it.'],versionSaved:['版本已保存，作品已进入收藏。','Version saved to your library.'],saveExport:['草稿有修改。确定保存新版本后导出？取消则导出上次保存版本。','Draft changed. OK saves a new version before exporting; Cancel exports the last saved version.'],downloaded:['文件已准备好','Your file is ready'],openFile:['打开作品','Open work'],download:['下载文件','Download file'],fileLocation:['已保存到本地作品导出目录，也可另存下载。','Saved in the local exports folder; you can also download a copy.'],configure:['先配置模型，再开始生成；样例和手动编辑无需模型。','Set up a model to generate. Samples and manual editing work without one.'],modelCost:['AI 创作使用你自己的模型服务，调用可能产生费用。','AI uses your own model provider and may incur charges.'],dismiss:['知道了','Got it'],close:['关闭','Close'],newVersion:['保存版本','Saved version'],details:['查看差异','Compare'],reduced:['关闭动效','Reduce motion'],
-} as const
-export type Word=keyof typeof words
-export const tr=(en:boolean)=>(key:Word)=>words[key][en?1:0]
-const errors:Record<string,[string,string]>={conflict:['作品已被修改，请重新打开最新内容后再试。','This work changed. Reopen the latest version.'],notFound:['作品或版本不存在。','Work or version not found.'],configuration:['请检查模型设置和密钥。','Check your model configuration and key.'],quota:['模型额度不足或请求受限。','Provider quota or rate limit reached.'],timeout:['生成超时；已有作品已保留。','Generation timed out; your work is safe.'],model:['模型请求失败，请检查设置和网络。','Model request failed. Check settings and connection.'],storage:['保存失败，内存中的修改仍然保留。','Could not save. Your edits remain in memory.'],format:['内容格式不符合要求。','Unsupported or invalid content.'],invalidOutput:['模型返回的内容未通过检查，请调整要求重试。','The model output did not pass validation. Revise your request and retry.'],tooLarge:['作品包不能超过 2 MiB。','Work packages must not exceed 2 MiB.'],busy:['该作品已有生成任务。','This work already has an active task.'],deleted:['作品已移入回收站。','This work is in the recycle bin.'],network:['连接失败，请检查本地服务后重试。','Connection failed. Check the local service and retry.']}
-export const errorText=(code:string,en:boolean)=>(errors[code]??errors.network)[en?1:0]
+export const words = {
+  reviewHint: [
+    "采用前请核对答案、收件人和故事路线。内容仍可直接编辑。",
+    "Check answers, recipients and story paths before adopting. You can edit the content directly.",
+  ],
+  adopted: ["已采用，已更新草稿", "Adopted into your draft"],
+  discarded: ["已放弃这次候选", "Proposal discarded"],
+  idea: ["你想做一份什么作品？", "What would you like to make?"],
+  recommend: ["帮我选类型", "Help me choose"],
+  chooseHint: [
+    "按内容线索推荐如下，选择后可带着想法进入创作室。",
+    "Suggested from your idea. Choose a type to bring it into the studio.",
+  ],
+  boundaryHint: [
+    "目前支持问答、贺卡和分支故事。复杂游戏、网站或视频暂不支持；你可以选择一个互动内容版本。",
+    "We support quizzes, cards and branching stories. Complex games, websites and videos are not supported; you can choose an interactive content version.",
+  ],
+  reveal: ["在访达中显示", "Show in Finder"],
+  brand: ["创作岛", "Creation Island"],
+  tagline: ["把一个想法，变成一份惊喜。", "Small ideas. Playable surprises."],
+  subtitle: [
+    "和 AI 伙伴一起，制作别人真正能玩的作品。",
+    "Make something someone can actually play, with your AI companion.",
+  ],
+  home: ["我的小岛", "My island"],
+  library: ["我的作品", "My works"],
+  inspiration: ["灵感手册", "Inspiration"],
+  settings: ["模型设置", "Model settings"],
+  start: ["开始创作", "Start creating"],
+  continue: ["继续上次作品", "Continue creating"],
+  light: ["轻量视图", "Light view"],
+  world: ["探索小岛", "Explore island"],
+  loading: [
+    "小岛正在醒来；你可以直接开始创作。",
+    "The island is waking up. You can start creating now.",
+  ],
+  worldFailed: [
+    "小岛暂时未能加载，创作和收藏仍可使用。",
+    "The island is unavailable. Your studio and library are ready.",
+  ],
+  quiz: ["问答小游戏", "Quiz game"],
+  card: ["互动贺卡", "Greeting card"],
+  story: ["分支故事", "Branching story"],
+  quizHint: [
+    "用几个好问题，开启一场小挑战。",
+    "A few good questions. A little challenge.",
+  ],
+  cardHint: [
+    "一段祝福，一点悬念，一份心意。",
+    "A message, a little suspense, a warm surprise.",
+  ],
+  storyHint: [
+    "每个选择，都通往不同的结局。",
+    "Every choice opens another possibility.",
+  ],
+  try: ["试玩", "Play"],
+  make: ["制作我的版本", "Make my version"],
+  back: ["返回小岛", "Back to island"],
+  save: ["保存版本", "Save version"],
+  export: ["导出可玩文件", "Export playable HTML"],
+  backup: ["备份可编辑作品", "Back up editable work"],
+  import: ["导入作品包", "Import work"],
+  title: ["作品名称", "Title"],
+  theme: ["视觉主题", "Theme"],
+  fresh: ["清新", "Fresh"],
+  celebration: ["庆祝", "Celebration"],
+  night: ["夜色", "Night"],
+  intro: ["开场介绍", "Introduction"],
+  ending: ["结束语", "Closing message"],
+  recipient: ["送给谁", "Recipient"],
+  signature: ["署名", "Signature"],
+  text: ["内容", "Content"],
+  prompt: ["题目", "Question"],
+  explanation: ["答案解释", "Explanation"],
+  answer: ["正确答案", "Correct answer"],
+  add: ["添加", "Add"],
+  remove: ["删除", "Remove"],
+  up: ["上移", "Move up"],
+  down: ["下移", "Move down"],
+  nodes: ["故事节点", "Story nodes"],
+  startNode: ["起始节点", "Start node"],
+  isEnding: ["这是一个结局", "This is an ending"],
+  choices: ["选项", "Choices"],
+  target: ["前往节点", "Target node"],
+  partner: ["创作伙伴", "Your companion"],
+  brief: ["创作卡", "Creative brief"],
+  briefHint: [
+    "先确认类型和内容，再告诉伙伴作品给谁、想表达什么、喜欢什么风格。",
+    "Choose a type, then tell your companion who this is for, what it should say and how it should feel.",
+  ],
+  ask: [
+    "例如：给朋友做一份轻松的露营问答。",
+    "For example: make a cheerful camping quiz for a friend.",
+  ],
+  generate: ["让伙伴制作 / 修改", "Create / revise with AI"],
+  scope: ["本次修改范围", "Edit scope"],
+  all: ["整个作品", "Whole work"],
+  scopeHint: [
+    "只想改一处时，先选中具体题目、段落或节点。",
+    "Choose an item first when you only want to change one part.",
+  ],
+  candidate: ["候选作品", "Proposed work"],
+  adopt: ["采用这次修改", "Use this change"],
+  discard: ["放弃", "Discard"],
+  changes: ["实际改动", "Changes"],
+  cancel: ["取消生成", "Cancel generation"],
+  retry: ["重试", "Retry"],
+  queued: ["排队中", "Queued"],
+  generating: ["伙伴正在创作", "Creating"],
+  validating: ["正在检查内容", "Checking"],
+  ready: ["等待你的确认", "Ready for review"],
+  failed: ["这次未能完成", "Could not finish"],
+  cancelled: ["已取消", "Cancelled"],
+  interrupted: ["上次创作被中断，可重新发起", "Interrupted; you may retry"],
+  editor: ["内容与样式", "Content & style"],
+  preview: ["实时试玩", "Live preview"],
+  narrow: ["窄屏预览", "Narrow preview"],
+  wide: ["宽屏预览", "Wide preview"],
+  reset: ["重新试玩", "Restart preview"],
+  saved: ["草稿已保存", "Draft saved"],
+  saving: ["正在保存", "Saving"],
+  unsaved: ["尚未保存，请重试", "Not saved; retry"],
+  invalid: [
+    "还有内容需要补充，预览保留上次有效作品。",
+    "Some fields need attention. Preview shows the last valid work.",
+  ],
+  versions: ["历史版本", "Versions"],
+  restore: ["从此版本继续", "Continue from version"],
+  search: ["搜索作品名称", "Search titles"],
+  allTypes: ["全部类型", "All types"],
+  trash: ["回收站", "Recycle bin"],
+  restoreTrash: ["还原", "Restore"],
+  destroy: ["永久删除", "Delete permanently"],
+  confirmDestroy: [
+    "永久删除后无法恢复，确定继续？",
+    "Permanently delete this work? This cannot be undone.",
+  ],
+  copy: ["复制作品", "Duplicate"],
+  edit: ["继续编辑", "Edit"],
+  empty: [
+    "这里还没有作品。先从一个小想法开始吧。",
+    "No works yet. Start with a small idea.",
+  ],
+  showcase: ["岛上的作品展", "Island showcase"],
+  slot: ["展示位", "Display slot"],
+  emptySlot: ["等一份新作品", "Waiting for a new work"],
+  show: ["放入展示位", "Put on display"],
+  noVersion: [
+    "保存一个版本后即可导出和展示。",
+    "Save a version before exporting or displaying it.",
+  ],
+  versionSaved: [
+    "版本已保存，作品已进入收藏。",
+    "Version saved to your library.",
+  ],
+  saveExport: [
+    "草稿有修改。确定保存新版本后导出？取消则导出上次保存版本。",
+    "Draft changed. OK saves a new version before exporting; Cancel exports the last saved version.",
+  ],
+  downloaded: ["文件已准备好", "Your file is ready"],
+  openFile: ["打开作品", "Open work"],
+  download: ["下载文件", "Download file"],
+  fileLocation: [
+    "已保存到本地作品导出目录，也可另存下载。",
+    "Saved in the local exports folder; you can also download a copy.",
+  ],
+  configure: [
+    "先配置模型，再开始生成；样例和手动编辑无需模型。",
+    "Set up a model to generate. Samples and manual editing work without one.",
+  ],
+  modelCost: [
+    "AI 创作使用你自己的模型服务，调用可能产生费用。",
+    "AI uses your own model provider and may incur charges.",
+  ],
+  dismiss: ["知道了", "Got it"],
+  close: ["关闭", "Close"],
+  newVersion: ["保存版本", "Saved version"],
+  details: ["查看差异", "Compare"],
+  reduced: ["关闭动效", "Reduce motion"],
+} as const;
+export type Word = keyof typeof words;
+export const tr = (en: boolean) => (key: Word) => words[key][en ? 1 : 0];
+const errors: Record<string, [string, string]> = {
+  conflict: [
+    "作品已被修改，请重新打开最新内容后再试。",
+    "This work changed. Reopen the latest version.",
+  ],
+  notFound: ["作品或版本不存在。", "Work or version not found."],
+  configuration: [
+    "请检查模型设置和密钥。",
+    "Check your model configuration and key.",
+  ],
+  quota: ["模型额度不足或请求受限。", "Provider quota or rate limit reached."],
+  timeout: [
+    "生成超时；已有作品已保留。",
+    "Generation timed out; your work is safe.",
+  ],
+  model: [
+    "模型请求失败，请检查设置和网络。",
+    "Model request failed. Check settings and connection.",
+  ],
+  storage: [
+    "保存失败，内存中的修改仍然保留。",
+    "Could not save. Your edits remain in memory.",
+  ],
+  format: ["内容格式不符合要求。", "Unsupported or invalid content."],
+  invalidOutput: [
+    "模型返回的内容未通过检查，请调整要求重试。",
+    "The model output did not pass validation. Revise your request and retry.",
+  ],
+  tooLarge: ["作品包不能超过 2 MiB。", "Work packages must not exceed 2 MiB."],
+  busy: ["该作品已有生成任务。", "This work already has an active task."],
+  deleted: ["作品已移入回收站。", "This work is in the recycle bin."],
+  network: [
+    "连接失败，请检查本地服务后重试。",
+    "Connection failed. Check the local service and retry.",
+  ],
+};
+export const errorText = (code: string, en: boolean) =>
+  (errors[code] ?? errors.network)[en ? 1 : 0];
+
+export function changeText(paths: string, en: boolean): string {
+  const t = tr(en);
+  const fields: Record<string, Word> = {
+    title: "title",
+    theme: "theme",
+    kind: "allTypes",
+    intro: "intro",
+    ending: "ending",
+    recipient: "recipient",
+    signature: "signature",
+    closing: "ending",
+    prompt: "prompt",
+    explanation: "explanation",
+    answerId: "answer",
+    text: "text",
+    choices: "choices",
+    options: "choices",
+    targetNodeId: "target",
+    startNodeId: "startNode",
+    nodes: "nodes",
+    sections: "text",
+    questions: "prompt",
+    label: "text",
+    id: "text",
+  };
+  return paths
+    .split(/,\s*|\n/)
+    .map((path) =>
+      path
+        .split(".")
+        .filter((p) => p !== "content")
+        .map((p) =>
+          /^\d+$/.test(p)
+            ? String(Number(p) + 1)
+            : fields[p]
+              ? t(fields[p])
+              : p,
+        )
+        .join(" · "),
+    )
+    .join(en ? "; " : "；");
+}

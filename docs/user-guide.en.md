@@ -24,3 +24,5 @@ Fixed navigation remains available if the world fails to load. Light view disabl
 ## Scope
 
 Three interactive work types and three themes are supported. Arbitrary code generation, hosted sharing links, cloud accounts and multiplayer communities are outside this release. See progress and acceptance records for the distinction between implemented and verified features.
+
+The bundled runtime requires macOS 13.5 or later. This build was tested on macOS 26.5.1 / Apple Silicon; other OS versions have not been verified.

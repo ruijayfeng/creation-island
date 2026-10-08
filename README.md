@@ -1,8 +1,8 @@
 # 创作岛
 
-创作岛是一款待开发的本地 AI 陪伴式互动创作产品。用户在小岛中制作问答小游戏、互动贺卡和分支故事，预览和修改后保存版本，并导出给别人独立使用。
+创作岛是一款本地 AI 陪伴式互动创作产品。用户在小岛中制作问答小游戏、互动贺卡和分支故事，预览和修改后保存版本，并导出给别人独立使用。
 
-**当前状态：公开 MIT 基线已导入，创作岛功能开发中。** 本目录是后续开发的主工作区；原 isles 仓库保留为来源和参考，Boss 中的旧规划作为历史材料。
+**当前状态：0.1.0 开发候选版已实现，已完成本机集中验收，跨设备检查待完成。** 本目录是开发主工作区；原 isles 仓库保留为来源和参考，Boss 中的旧规划作为历史材料。
 
 ## 仓库与开发起点
 
@@ -11,6 +11,8 @@ GitHub 仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creat
 已导入公开 MIT 基线，三类作品的创作、编辑、版本、收藏及导出已接入。当前实现与验收状态见[开发进度](docs/progress.md)，应用操作见[使用说明](docs/user-guide.md)。
 
 开发环境使用 Node.js `^22.19.0` 或 `>=24.0.0` 及 Corepack Yarn `4.18.0`：先运行 `corepack yarn install --immutable`，再运行 `corepack yarn dev:web`。世界导出需要 Godot，运行 `corepack yarn build:world`。macOS ARM64 候选包通过 `corepack yarn build:desktop:darwin` 生成。
+
+集中验收包含 20 项新产品测试和 18 组真实模型场景；结构检查与人工内容质量分别记录，见 [验收记录](docs/acceptance.md)。
 
 ## 文档入口
 

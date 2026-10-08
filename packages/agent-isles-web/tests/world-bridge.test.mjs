@@ -87,7 +87,7 @@ test('world accepts only the paired parent and preserves both bridge directions'
   assert.equal(received.length, 0)
   listener({ origin: 'http://localhost:3081', source: parent, data })
   assert.equal(received.length, 1)
-  assert.equal(document.title, 'Test · agent-isles')
+  assert.equal(document.title, 'Test · Creation Island')
   assert.equal(received[0].payload.panelOpen, true)
   assert.equal(received[0].payload.locale, 'en')
   listener({ origin: 'http://localhost:3081', source: parent, data: { ...data, payload: { ...data.payload, panelOpen: false } } })

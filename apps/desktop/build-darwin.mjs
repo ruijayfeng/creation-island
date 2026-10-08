@@ -1,4 +1,4 @@
-// 构建 macOS Apple Silicon（darwin-x64）便携包：内置 Node、Web 插件、Godot 世界与菜单栏启动器。
+// 构建 macOS Apple Silicon（darwin-arm64）便携包：内置 Node、Web 插件、Godot 世界与菜单栏启动器。
 import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -21,10 +21,10 @@ chmodSync(path.join(app, 'runtime/node'), 0o755)
 writeFileSync(
   path.join(app, '发行说明.txt'),
   [
-    'agent-isles macOS Apple Silicon 本地预览版',
+    '创作岛 macOS Apple Silicon 本地预览版',
     '双击「Creation Island.app」进入。菜单栏图标可重新打开或退出。',
     '数据存放在 ~/Library/Application Support/Creation Island/data，删除应用时保留。',
-    '已内置 Node 和固定 DSH 运行时。模型需自行配置；项目所需 Git、Python 等开发工具需另行安装。',
+    '已内置 Node 和固定 DSH 运行时。创作无需安装开发工具；AI 模型服务需自行配置。',
     '预览版未签名：若 Gatekeeper 拦截，请在系统设置中允许，或右键打开。',
     '第三方依赖许可证随 node_modules、runtime 和世界资源提供。',
     '',
@@ -49,7 +49,7 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
   <key>CFBundleExecutable</key><string>creation-island</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleIconFile</key><string>creation-island.icns</string>
-  <key>LSMinimumSystemVersion</key><string>12.0</string>
+  <key>LSMinimumSystemVersion</key><string>13.5</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
 </dict>
@@ -65,6 +65,7 @@ const compile = spawnSync(
   'swiftc',
   [
     '-O',
+    '-target', 'arm64-apple-macos13.5',
     '-framework', 'AppKit',
     '-framework', 'Foundation',
     path.join(root, 'apps/desktop/macos/Launcher.swift'),

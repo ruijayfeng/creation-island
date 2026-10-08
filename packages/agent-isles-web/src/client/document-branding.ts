@@ -23,12 +23,8 @@ export function applyDocumentBranding(
   document.head.append(icon)
   const touchIcon = document.createElement('link')
   touchIcon.rel = 'apple-touch-icon'
-  touchIcon.href = '/agent-isles/brand/apple-touch-icon.png'
-  const manifest = document.createElement('link')
-  manifest.rel = 'manifest'
-  manifest.href = '/agent-isles/brand/site.webmanifest'
+  touchIcon.href = '/agent-isles/brand/creation-island.png'
   document.head.append(touchIcon)
-  document.head.append(manifest)
 
   let updating = false
   const updateTitle = (): void => {
@@ -48,7 +44,6 @@ export function applyDocumentBranding(
     observer.disconnect()
     icon.remove()
     touchIcon.remove()
-    manifest.remove()
     document.title = previousTitle
   }
 }

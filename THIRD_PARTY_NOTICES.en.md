@@ -13,3 +13,5 @@ The repository currently includes or pins the following major third-party conten
 - Other dependencies installed through Yarn: subject to each dependency's published license and notices.
 
 Before every release, the publisher must review newly added dependencies and assets and ensure that required notices are distributed with both source and binary releases. This file is a navigation index and does not replace any third-party license text.
+
+Creation Island additions are by Jay Feng; the upstream agent-isles copyright remains intact. See [Godot licenses](docs/godot-licenses.txt) for the engine and bundled component notices extracted from the engine used for this build.

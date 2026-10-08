@@ -4,6 +4,8 @@
 
 根目录的 [MIT License](LICENSE) 适用于 agent-isles 的自有代码与文档，不改变第三方组件、字体和素材的版权或许可条件。
 
+创作岛新增部分由 Jay Feng 开发；上游 agent-isles 的版权声明继续保留。Godot 引擎及其内置组件的许可文本见 [Godot 声明](docs/godot-licenses.txt)，从本次构建所用引擎提取。
+
 本仓库当前包含或固定引用的主要第三方内容包括：
 
 - `deepseek-harness/`：DeepSeek Harness 上游 submodule，许可文本见 [`deepseek-harness/LICENSE`](deepseek-harness/LICENSE)。

@@ -49,6 +49,10 @@ export function materializeAppTree(app) {
   copy('THIRD_PARTY_NOTICES.en.md')
   copy('docs/user-guide.md')
   copy('docs/user-guide.en.md')
+  copy('docs/godot-licenses.txt')
+  copy('games/mosslight/assets/fonts/NOTICE.md', 'licenses/font-NOTICE.md')
+  copy('games/mosslight/assets/fonts/OFL.txt', 'licenses/font-OFL.txt')
+  copy('games/mosslight/assets/xi4u-LICENSE.txt', 'licenses/world-MIT.txt')
   copy('games/mosslight/build/web')
   const web = JSON.parse(readFileSync(path.join(root, 'apps/web/package.json'), 'utf8'))
   writeFileSync(

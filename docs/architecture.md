@@ -55,7 +55,7 @@
 
 ### 状态规则
 
-任务状态为 queued、generating、validating、ready、failed、cancelled 或 interrupted。用户界面将其映射为自然语言。
+任务状态为 queued、generating、validating、ready、failed、cancelled 、interrupted、adopted 或 discarded。用户界面将其映射为自然语言。
 
 每个作品同一时刻只允许一个生成任务；不同作品可保存草稿，但首版全局最多一个模型任务，其他请求明确排队。等待期间可以继续试玩旧版本。
 
@@ -172,7 +172,7 @@ src/client/creation/
 | card | recipient、sections、signature、closing；每段有 id 和 text | 段数符合规格；顺序明确；无重复 ID；必要文字非空 |
 | story | intro、startNodeId、nodes；节点有 id、text、choices 或 ending；选项有 id、label、targetNodeId | 引用有效、节点可达、无循环、每条路线可结束；结局数量符合规格 |
 
-草稿允许缺字段并附错误信息，正式版本使用严格 schema。标题上限 80 字符；单题文本 300、选项 120、解释 600；贺卡单段 1000；故事单节点 1500。限制由前后端共享定义，界面显示余量，禁止静默截断。长度以同一实现口径计数，导入遵守相同限制。
+草稿保留完整字段结构，允许内容暂时为空并附错误信息，正式版本使用严格 schema。标题上限 80 字符；单题文本 300、选项 120、解释 600；贺卡单段 1000；故事单节点 1500。限制由前后端共享定义，界面显示余量，禁止静默截断。长度以同一实现口径计数，导入遵守相同限制。
 
 AI 输出只接受三类结构：`clarify` 包含需要用户补充的问题；`create` 包含完整作品内容；`modify` 包含受支持操作和摘要。输出包中的任务标识由宿主绑定，不相信模型自报的作品 ID 或 revision。解析失败或校验不通过时，将具体错误及允许范围回传，最多一次修复。
 

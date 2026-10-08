@@ -7,9 +7,9 @@ import {
 } from '../lib/types/client/document-branding.js'
 
 test('document title retains the current session and replaces the product name', () => {
-  assert.equal(agentIslesDocumentTitle('DeepSeek Harness'), 'agent-isles')
-  assert.equal(agentIslesDocumentTitle('你好 — DeepSeek Harness'), '你好 — agent-isles')
-  assert.equal(agentIslesDocumentTitle('agent-isles'), 'agent-isles')
+  assert.equal(agentIslesDocumentTitle('DeepSeek Harness'), '创作岛 · Creation Island')
+  assert.equal(agentIslesDocumentTitle('你好 — DeepSeek Harness'), '你好 — 创作岛 · Creation Island')
+  assert.equal(agentIslesDocumentTitle('创作岛 · Creation Island'), '创作岛 · Creation Island')
 })
 
 test('document branding installs the favicon, follows title changes, and cleans up', () => {
@@ -36,17 +36,16 @@ test('document branding installs the favicon, follows title changes, and cleans 
   }
 
   const dispose = applyDocumentBranding(document, Observer)
-  assert.equal(document.title, 'agent-isles')
-  assert.equal(links.length, 3)
+  assert.equal(document.title, '创作岛 · Creation Island')
+  assert.equal(links.length, 2)
   assert.equal(links[0].rel, 'icon')
-  assert.equal(links[0].type, 'image/x-icon')
+  assert.equal(links[0].type, 'image/svg+xml')
   assert.equal(links[1].rel, 'apple-touch-icon')
-  assert.equal(links[2].rel, 'manifest')
   assert.equal(links[0].href, AGENT_ISLES_FAVICON)
 
   document.title = '新的会话 — DeepSeek Harness'
   callback()
-  assert.equal(document.title, '新的会话 — agent-isles')
+  assert.equal(document.title, '新的会话 — 创作岛 · Creation Island')
 
   dispose()
   assert.equal(disconnected, true)
