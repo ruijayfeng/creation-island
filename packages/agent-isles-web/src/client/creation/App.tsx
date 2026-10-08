@@ -71,6 +71,7 @@ export function CreationApp(
     [light, setLight] = useState(false),
     [worldState, setWorldState] = useState("loading"),
     [versions, setVersions] = useState(false),
+    [mobilePane, setMobilePane] = useState("editor"),
     [viewVersion, setViewVersion] = useState<Version>(),
     [receipt, setReceipt] = useState<{
       url: string;
@@ -93,6 +94,9 @@ export function CreationApp(
       requestId: string;
       payload: Record<string, unknown>;
     }>();
+  useEffect(() => {
+    if (appRoot.current) appRoot.current.scrollTop = 0;
+  }, [page, selected]);
   const refresh = async () => {
     const next = await api<State>();
     setState(next);
@@ -902,7 +906,18 @@ export function CreationApp(
               </button>
             </div>
           </div>
-          <div className="ci-columns">
+          <nav className="ci-mobile-switch" aria-label={t("editor")}>
+            {(["partner", "editor", "preview"] as const).map((pane) => (
+              <button
+                key={pane}
+                aria-pressed={mobilePane === pane}
+                onClick={() => setMobilePane(pane)}
+              >
+                {t(pane)}
+              </button>
+            ))}
+          </nav>
+          <div className={`ci-columns ci-pane-${mobilePane}`}>
             <aside className="ci-partner">
               <img src="/agent-isles/brand/q-portrait.png" alt="" />
               <h2>{t("partner")}</h2>
