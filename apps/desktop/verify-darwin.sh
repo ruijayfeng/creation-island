@@ -72,6 +72,7 @@ HOLD_HOME="$(mktemp -d /tmp/agent-isles-instance-data.XXXXXX)"
 export AGENT_ISLES_DATA_HOME="$HOLD_HOME"
 "$LAUNCHER" --smoke-test --smoke-hold &
 FIRST=$!
+trap 'kill -TERM "$FIRST" 2>/dev/null || true' EXIT
 DEADLINE=$((SECONDS + 95))
 while [[ ! -f "$HOLD_HOME/smoke-ok.txt" ]]; do
   if ! kill -0 "$FIRST" 2>/dev/null; then
@@ -103,6 +104,22 @@ from urllib.parse import urlparse
 print(urlparse("""$HELD_URL""").port)
 PY
 )"
+# Exercise the actual packaged service without developer libraries or model credentials.
+"$NODE" --input-type=module - "$HOLD_HOME/browser-url.txt" <<'JS'
+import {readFileSync} from 'node:fs';
+import {randomUUID} from 'node:crypto';
+import assert from 'node:assert/strict';
+const origin=new URL(readFileSync(process.argv[2],'utf8')).origin;
+async function api(p){const r=await fetch(origin+'/creation/api',{method:'POST',headers:{origin,'content-type':'application/json','x-creation-island':'1'},body:JSON.stringify({requestId:randomUUID(),...p})});assert.equal(r.status,200);return r.json()}
+for(const kind of ['quiz','card','story']){
+ let w=await api({op:'create',kind,en:false});w=await api({op:'save',id:w.id,expectedRevision:w.revision});
+ const v=w.versions[0];const pack=await api({op:'export',id:w.id,versionId:v.id,format:'json'});
+ const imported=await api({op:'import',pack:JSON.parse(pack.body)});assert.notEqual(imported.id,w.id);assert.deepEqual(imported.draft,w.draft);
+ const html=await api({op:'export',id:w.id,versionId:v.id,format:'html'});assert.match(html.body,/connect-src 'none'/);assert.doesNotMatch(html.body,/src="https?:/);
+ const edited=structuredClone(w.draft);edited.title+=' check';w=await api({op:'edit',id:w.id,expectedRevision:w.revision,data:edited});w=await api({op:'restore',id:w.id,expectedRevision:w.revision,versionId:v.id});assert.equal(w.draft.title,v.data.title);
+ console.log(kind+' packaged create/save/export/import/restore passed');
+}
+JS
 # SIGTERM must reach the Swift launcher so it can reap the Node process group.
 kill -TERM "$FIRST" 2>/dev/null || true
 wait "$FIRST" 2>/dev/null || true
@@ -116,8 +133,8 @@ done
 if lsof -nP -iTCP:"$HELD_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
   echo "Service survived launcher termination on port $HELD_PORT" >&2
   # Best-effort mop for local diagnosis; still fail the gate.
-  pkill -f "apps/desktop/boot.mjs" 2>/dev/null || true
+  # Never terminate other application instances by a shared process name.
   exit 1
 fi
 
-echo "PASS: smoke ready, exit cleanup, single instance, native modules"
+echo "PASS: smoke ready, exit cleanup, single instance, native modules, three work flows"
