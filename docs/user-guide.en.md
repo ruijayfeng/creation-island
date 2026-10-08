@@ -29,6 +29,16 @@ Legacy interactive works keep the original quiz, card and branching story data a
 
 Bundled Node/npm and the pinned runtime start the app and static projects. Framework dependencies, model accounts and system tools depend on the project. The runtime requires macOS 13.5 or later; consult the open-project acceptance record for tested environments and cross-device limitations.
 
+## Island interaction changes in current source (pending review)
+
+The current source has no permanent row of feature tabs. Click a character or use the collapsible **Island map**. Aqi opens making, Shiye opens the project book, and Adu opens changes and delivery. The introductory note can be dismissed. These changes are absent from the 0.2.0 package.
+
+Tell Aqi your idea first. A project name is optional; without one, the first line supplies a short name. Creating the folder keeps the idea ready for you to send. In a project, **Try this version** is the primary action; notes, files and other actions expand when needed. **I’d like a change** opens the same native conversation beside the preview. Main preview actions remain visible. Permissions, attachments, model choice and actual approvals remain in the native interface.
+
+Shiye lists projects first, with the current project at the top. The project book contains saved notes, versions and earlier conversations. Adu explains current changes before showing files or saved-version exports. Other export formats, build commands and detailed manifests expand separately. The coast shows the selected saved version; historical iteration creates a separate copy.
+
+Inspiration shows one playable example at a time. Turn pages, try an example, then copy it without automatically calling a model. Screenshot feedback explains marking and describing changes, and explicitly says when only text is sent. Settings and language are under the top-right gear. Focus mode is optional; closing restores the island view without stopping work. Reduced motion leaves the camera unchanged.
+
 ## New source features (pending acceptance; absent from the 0.2.0 package)
 
 Inspiration now offers four playable static starters. Play one, then name and copy its real files into your own project. Copying does not call a model. Cancel the selection before copying; once accepted, copying finishes even if you leave, and the project remains with Shiye. Demo browser storage is not copied with source files.

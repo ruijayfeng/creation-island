@@ -97,6 +97,9 @@ var agent_isles_workspace_id := ""
 var agent_isles_session_id := ""
 var embedded_mode := false
 var agent_isles_panel_open := false
+# Presentation-only camera cue; project and execution state remain in the host.
+var creation_attention: Dictionary = {}
+var creation_camera_restore: Dictionary = {}
 var coder_completion_recall_left := -1.0
 var coder_agent_status := "idle"
 var region_barriers: Array[StaticBody3D] = []
@@ -225,7 +228,7 @@ func _on_agent_isles_message(arguments: Array) -> void:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
 	var message := parsed as Dictionary
-	if message.get("source") != "agent-isles-host" or int(message.get("version", 0)) != 3:
+	if message.get("source") != "agent-isles-host" or int(message.get("version", 0)) != 4:
 		return
 	if message.get("type") in ["creation:showcase", "project:showcase"]:
 		creation_showcase.update_slots(message.get("payload"))
@@ -309,6 +312,12 @@ func _on_agent_isles_message(arguments: Array) -> void:
 	if payload.has("reducedMotion"):
 		nature_motion = not bool(payload.reducedMotion)
 		camera_motion = nature_motion
+	var cue: Variant = payload.get("attention")
+	creation_attention = {}
+	if typeof(cue) == TYPE_DICTIONARY and cue.get("target") in ["coder", "teacher", "file_keeper", "coordinator", "showcase"] and cue.get("layout") in ["encounter", "side", "focus"]:
+		var ratio: Variant = cue.get("sideRatio")
+		if (typeof(ratio) == TYPE_FLOAT or typeof(ratio) == TYPE_INT) and is_finite(float(ratio)) and float(ratio) >= 0 and float(ratio) <= .85:
+			creation_attention = cue
 	var panel_open := bool(payload.get("panelOpen", false))
 	if panel_open != agent_isles_panel_open:
 		agent_isles_panel_open = panel_open
@@ -998,6 +1007,8 @@ func set_view_mode(mode: ViewMode) -> void:
 
 
 func _update_camera(delta: float) -> void:
+	if not creation_camera_restore.is_empty():
+		return
 	if view_mode == ViewMode.OVERVIEW:
 		# Follow either bridge; medium zoom frames the neighboring pair, far zoom all three.
 		var region_center := DESERT_ORIGIN * clampf((player.position.x - 9) / 12, 0, 1)
@@ -1041,7 +1052,47 @@ func _update_view_hint() -> void:
 		view_hint.text += "\n" + tr("view.camera_motion") % (tr("common.on") if camera_motion else tr("common.off"))
 
 
+func _update_creation_attention(delta: float) -> void:
+	if camera == null:
+		return
+	var enabled: bool = agent_isles_panel_open and nature_motion and not creation_attention.is_empty() and creation_attention.get("layout") != "focus"
+	if enabled and get_viewport().get_visible_rect().size.x <= 800 and creation_attention.get("layout") == "side":
+		enabled = false
+	creation_workshop.set_attention(str(creation_attention.target) if enabled else "")
+	if not enabled:
+		if not creation_camera_restore.is_empty():
+			camera.global_transform = creation_camera_restore.transform
+			camera.projection = creation_camera_restore.projection
+			camera.size = creation_camera_restore.size
+			camera.fov = creation_camera_restore.fov
+			hero.visible = creation_camera_restore.hero_visible
+			creation_camera_restore = {}
+		return
+	if creation_camera_restore.is_empty():
+		creation_camera_restore = {"transform": camera.global_transform, "projection": camera.projection, "size": camera.size, "fov": camera.fov, "hero_visible": hero.visible}
+	var target: Vector3
+	if creation_attention.target == "showcase":
+		target = creation_showcase.bodies[2].global_position.lerp(creation_showcase.bodies[3].global_position, .5) + Vector3(0, 1.0, 0)
+	else:
+		var index: int = ["coder", "teacher", "file_keeper", "coordinator"].find(creation_attention.target)
+		target = creation_workshop.places[index].global_position + Vector3(0, 1.0, 0)
+	var size := 14.0
+	var offset := Vector3(13.2, 25.3, 30).normalized() * 34
+	var pose := Transform3D(Basis.IDENTITY, target + offset).looking_at(target)
+	if creation_attention.layout == "encounter":
+		target -= pose.basis.y * size * .23
+	else:
+		var viewport_size := get_viewport().get_visible_rect().size
+		target += pose.basis.x * size * viewport_size.x / maxf(viewport_size.y, 1) * float(creation_attention.sideRatio) * .5
+	var destination := Transform3D(pose.basis, target + offset)
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.size = lerpf(camera.size, size, 1 - exp(-delta * 5))
+	camera.global_transform = camera.global_transform.interpolate_with(destination, 1 - exp(-delta * 5))
+	hero.visible = true
+
+
 func _process(delta: float) -> void:
+	_update_creation_attention(delta)
 	if creation_workshop != null:
 		creation_workshop.advance(delta, nature_motion)
 	if sanctuary_computer.review_dialogue.opened:

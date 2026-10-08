@@ -4,7 +4,7 @@ import { command } from './api.js'
 import { translator, errorText } from './words.js'
 export function NotesPanel({projectId,notes,memory,remember,en,busy,refresh,organize}:{projectId:string;notes:ProjectNotes;memory?:ProjectNotes;remember(value:ProjectNotes):void;en:boolean;busy:boolean;refresh():Promise<void>;organize():Promise<void>}) {
   const t=translator(en),[draft,setDraft]=useState(()=>structuredClone(memory??notes)),[saving,setSaving]=useState(false),[error,setError]=useState(''),[status,setStatus]=useState('')
-  useEffect(()=>remember(draft),[draft])
+  useEffect(()=>{remember(draft)},[draft])
   async function save(){setSaving(true);setError('');try{const next=await command<ProjectNotes>({op:'notes-save',projectId,revision:draft.revision,notes:draft});setDraft(next);setStatus(t('notesSaved'));await refresh()}catch(e){setError(errorText(e,en))}finally{setSaving(false)}}
   return <section aria-label={t('notes')}><p className="ci-muted">{t('notesHint')}</p>
     {draft.revision!==notes.revision&&<div role="alert"><p>{t('notesConflict')}</p><button onClick={()=>{setDraft(structuredClone(notes));setStatus('')}}>{t('reloadNotes')}</button><button onClick={()=>setDraft(d=>({...d,revision:notes.revision}))}>{t('mergeNotes')}</button></div>}

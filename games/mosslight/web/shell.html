@@ -82,7 +82,7 @@
   </main>
   <script src="$GODOT_URL"></script>
   <script>
-    const AGENT_ISLES_BRIDGE_VERSION = 3;
+    const AGENT_ISLES_BRIDGE_VERSION = 4;
     const embedded = new URLSearchParams(location.search).get('embed') === '1';
     // The host and iframe must use the same loopback origin after a hard refresh.
     // Referrer is authoritative when the world is embedded; fall back to same-origin
@@ -151,6 +151,12 @@
       if (typeof message !== 'object' || message === null
         || message.source !== 'agent-isles-host'
         || message.version !== AGENT_ISLES_BRIDGE_VERSION) return;
+      if (message.type === 'world:init' && message.payload?.attention != null) {
+        const cue = message.payload.attention;
+        if (typeof cue !== 'object' || !['coder', 'teacher', 'file_keeper', 'coordinator', 'showcase'].includes(cue.target)
+          || !['encounter', 'side', 'focus'].includes(cue.layout)
+          || !Number.isFinite(cue.sideRatio) || cue.sideRatio < 0 || cue.sideRatio > .85) return;
+      }
       if (message.type === 'project:showcase') {
         if (!Array.isArray(message.payload) || message.payload.length !== 6 || message.payload.some(item => item !== null &&
           (typeof item !== 'object' || typeof item.versionId !== 'string' || item.versionId.length > 160 || typeof item.title !== 'string' || item.title.length > 120 ||

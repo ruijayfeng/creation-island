@@ -1,4 +1,4 @@
-export const WORLD_BRIDGE_VERSION = 3 as const
+export const WORLD_BRIDGE_VERSION = 4 as const
 
 export function worldFrameUrl(hostHref: string): URL {
   const url = new URL('/world/?embed=1', hostHref)
@@ -38,6 +38,8 @@ export type HostToWorldMessage =
         sessionId: string | null
         panelOpen: boolean
         residents: readonly ResidentView[]
+        reducedMotion?: boolean
+        attention?: { target: ResidentId | 'showcase'; layout: 'encounter' | 'side' | 'focus'; sideRatio: number } | null
       }
     }
   | {

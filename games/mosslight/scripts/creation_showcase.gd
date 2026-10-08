@@ -52,7 +52,7 @@ func _ready() -> void:
 		label.modulate = Color("fff4d4")
 		body.add_child(label)
 		body.input_event.connect(func(_camera: Node, event: InputEvent, _position: Vector3, _normal: Vector3, _shape: int):
-			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not get_parent().agent_isles_panel_open:
 				selected.emit(i)
 		)
 		add_child(body)

@@ -6,7 +6,9 @@
 
 `FeedbackPanel.tsx` 负责裁剪、实色遮盖、归一化标注与本次编辑历史；显式保存的处理后底图/反馈可恢复。submission 复用原生请求 ID，对账使用持久 user/message 或 inbox splice 来源；重试冻结文字及图片载荷，不新建会话。模型图片能力未知时默认文字并明确提示，不把文字连接当作识图验证。
 
-浏览器主动 Region Capture 成功裁出容器后才取帧并停止流；失败可上传/粘贴。静态历史预览通过独立无权限的来源挑战确认 iframe 原点，封面需捕获前后核对、宿主校验和用户确认；Node 及未知来源只显示图示。世界桥协议 3 仅传已校验的有界 PNG 缩略图和成果引用。具体状态与限制见 [进度](progress.md)、[四项方案](next-iteration-plan.md)。
+浏览器主动 Region Capture 成功裁出容器后才取帧并停止流；失败可上传/粘贴。静态历史预览通过独立无权限的来源挑战确认 iframe 原点，封面需捕获前后核对、宿主校验和用户确认；Node 及未知来源只显示图示。世界桥协议 4 传已校验的有界 PNG 缩略图、成果引用及可选 attention 呈现提示；React 类型、加载壳和 Godot 同步。attention 仅接受固定地点、布局与 0–0.85 的面板比例，不能执行工具或控制项目数据。镜头保存并恢复原变换，减少动态或窄窗侧栏不移动镜头。具体状态与限制见 [进度](progress.md)、[四项方案](next-iteration-plan.md)。
+
+岛内交互纠偏已实现待复核：总览快捷地图、角色语境、底部项目簿、逐张灵感、分层交付与固定预览动作。原生对话仍通过 NativeChat 定位原有 outlet，不复制 UI 或另建会话；主题变量只作用于小岛，专注模式动态调整浮层层级。固定版本的统计行仅在专注模式显示，精确定位该统计项，不隐藏其他审批/问题 dock。修复项目记录 effect 返回 Map 导致卸载崩溃，并防止创建、保存和恢复的迟到回包抢走已切换的界面。
 
 新默认入口为 `client/projects/IslandApp.tsx`，原生 Harness 保持 Workspace、Session、审批与工具执行的唯一来源。项目插件位于 `src/projects/`；`service.ts` 注册 `/creation/projects/`，`files.ts` 管理便携文件集合与内容寻址快照，`preview.ts` 管理应用拥有的预览进程。旧 `/creation/api` 仅服务兼容作品。
 

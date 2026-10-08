@@ -114,6 +114,10 @@ func refresh_locale() -> void:
 	var keys := ["creation.aqi", "creation.shiye", "creation.adu", "creation.inspiration"]
 	for i in range(labels.size()): labels[i].text = tr(keys[i])
 
+func set_attention(target: String = "") -> void:
+	for i in range(labels.size()):
+		labels[i].visible = target.is_empty() or places[i].get_meta("resident") == target
+
 func set_status(status: String) -> void:
 	working = status in ["working","thinking"]
 	(lamp.material_override as StandardMaterial3D).albedo_color = Color("c86b42" if status == "approval" else "f4d989" if working else "75949d")
