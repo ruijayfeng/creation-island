@@ -4,10 +4,12 @@ export function Editor({
   data,
   onChange,
   en,
+  selected = "all",
 }: {
   data: Content;
   onChange(d: Content): void;
   en: boolean;
+  selected?: string;
 }) {
   const t = tr(en);
   const change = (f: (d: Content) => void) => {
@@ -36,6 +38,7 @@ export function Editor({
   );
   return (
     <div className="ci-editor">
+      {selected === "all" && <>
       {field(t("title"), data.title, 80, (value) =>
         change((d) => {
           d.title = value;
@@ -64,10 +67,11 @@ export function Editor({
             if (d.kind !== "card") d.content.intro = value;
           }),
         )}
+      </>}
       {data.kind === "quiz" && (
         <>
           {data.content.questions.map((q, i) => (
-            <fieldset key={q.id}>
+            <fieldset key={q.id} hidden={selected !== q.id}>
               <legend>
                 {t("prompt")} {i + 1}
               </legend>
@@ -177,7 +181,7 @@ export function Editor({
               </div>
             </fieldset>
           ))}
-          <button
+          {selected === "all" && <button
             disabled={data.content.questions.length >= 8}
             onClick={() =>
               change((d) => {
@@ -196,8 +200,8 @@ export function Editor({
             }
           >
             + {t("prompt")}
-          </button>
-          {field(t("ending"), data.content.ending, 1000, (value) =>
+          </button>}
+          {selected === "all" && field(t("ending"), data.content.ending, 1000, (value) =>
             change((d) => {
               if (d.kind === "quiz") d.content.ending = value;
             }),
@@ -206,13 +210,13 @@ export function Editor({
       )}
       {data.kind === "card" && (
         <>
-          {field(t("recipient"), data.content.recipient, 80, (value) =>
+          {selected === "all" && field(t("recipient"), data.content.recipient, 80, (value) =>
             change((d) => {
               if (d.kind === "card") d.content.recipient = value;
             }),
           )}
           {data.content.sections.map((s, i) => (
-            <fieldset key={s.id}>
+            <fieldset key={s.id} hidden={selected !== s.id}>
               <legend>{i + 1}</legend>
               {field(t("text"), s.text, 1000, (value) =>
                 change((d) => {
@@ -260,7 +264,7 @@ export function Editor({
               </div>
             </fieldset>
           ))}
-          <button
+          {selected === "all" && <button
             disabled={data.content.sections.length >= 5}
             onClick={() =>
               change((d) => {
@@ -273,13 +277,13 @@ export function Editor({
             }
           >
             + {t("text")}
-          </button>
-          {field(t("signature"), data.content.signature, 80, (value) =>
+          </button>}
+          {selected === "all" && field(t("signature"), data.content.signature, 80, (value) =>
             change((d) => {
               if (d.kind === "card") d.content.signature = value;
             }),
           )}
-          {field(t("ending"), data.content.closing, 1000, (value) =>
+          {selected === "all" && field(t("ending"), data.content.closing, 1000, (value) =>
             change((d) => {
               if (d.kind === "card") d.content.closing = value;
             }),
@@ -288,7 +292,7 @@ export function Editor({
       )}
       {data.kind === "story" && (
         <>
-          <label className="ci-field">
+          {selected === "all" && <label className="ci-field">
             {t("startNode")}
             <select
               value={data.content.startNodeId}
@@ -305,9 +309,9 @@ export function Editor({
                 </option>
               ))}
             </select>
-          </label>
+          </label>}
           {data.content.nodes.map((n, i) => (
-            <fieldset key={n.id}>
+            <fieldset key={n.id} hidden={selected !== n.id}>
               <legend>
                 {t("nodes")} {i + 1}
               </legend>
@@ -412,7 +416,7 @@ export function Editor({
               </button>
             </fieldset>
           ))}
-          <button
+          {selected === "all" && <button
             disabled={data.content.nodes.length >= 12}
             onClick={() =>
               change((d) => {
@@ -427,7 +431,7 @@ export function Editor({
             }
           >
             + {t("nodes")}
-          </button>
+          </button>}
         </>
       )}
     </div>

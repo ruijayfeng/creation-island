@@ -12,6 +12,8 @@ import {
 import type { State, Work, Version } from "../../creation/store.js";
 import { render } from "../../creation/player.js";
 import { changes } from "../../creation/modifications.js";
+import { Cover, Outline, ChangeReview } from "./WorkVisuals.js";
+import { outline } from "./presentation.js";
 import { Editor } from "./Editor.js";
 import { tr, errorText, changeText } from "./words.js";
 import { styles } from "./styles.js";
@@ -72,12 +74,16 @@ export function CreationApp(
     [worldState, setWorldState] = useState("loading"),
     [versions, setVersions] = useState(false),
     [mobilePane, setMobilePane] = useState("editor"),
+    [mode, setMode] = useState<"edit" | "play" | "review">("edit"),
+    [partnerOpen, setPartnerOpen] = useState(false),
+    [exportChoice, setExportChoice] = useState<string>(),
     [viewVersion, setViewVersion] = useState<Version>(),
     [receipt, setReceipt] = useState<{
       url: string;
       name: string;
       html: boolean;
       exportId: string;
+      version: string;
     }>(),
     [welcome, setWelcome] = useState(
       () => localStorage.getItem("creation-welcome") !== "yes",
@@ -167,6 +173,9 @@ export function CreationApp(
     setValid(!issues(w.draft).length ? w.draft : w.versions.at(-1)?.data);
     setDirty(false);
     setTarget("all");
+    setMode("edit");
+    setMobilePane("editor");
+    setPartnerOpen(false);
     setRequest("");
     setPage("studio");
     setVersions(false);
@@ -183,6 +192,7 @@ export function CreationApp(
     setDraft(data);
     setDirty(true);
     setViewVersion(undefined);
+    if (target !== "all" && !outline(data, en).some(x => x.id === target)) setTarget("all");
     if (!issues(data).length) setValid(data);
   };
   const go = (p: typeof page) =>
@@ -206,6 +216,7 @@ export function CreationApp(
       live.current = result.draft;
       savedText.current = JSON.stringify(result.draft);
       setDraft(result.draft);
+      if (target !== "all" && !outline(result.draft, en).some(x => x.id === target)) setTarget("all");
       setDirty(false);
       if (!issues(result.draft).length) setValid(result.draft);
     }
@@ -217,16 +228,16 @@ export function CreationApp(
       load(await command<Work>({ op: "create", kind, en }));
       await refresh();
     });
-  const download = async (format: string) => {
+  const download = async (format: string, choice?: "save" | "previous") => {
     await flush();
     let w = current.current;
     if (!w) return;
     let version = w.versions.at(-1);
-    if (
-      !version ||
-      (JSON.stringify(version.data) !== JSON.stringify(w.draft) &&
-        confirm(t("saveExport")))
-    ) {
+    if (version && JSON.stringify(version.data) !== JSON.stringify(w.draft) && !choice) {
+      setExportChoice(format);
+      return;
+    }
+    if (!version || choice === "save") {
       w = await act("save", { summary: t("newVersion") });
       version = w?.versions.at(-1);
     }
@@ -246,7 +257,10 @@ export function CreationApp(
       name: file.filename,
       html: format === "html",
       exportId: file.exportId,
+      version: new Date(version.created).toLocaleString(),
+
     });
+    setExportChoice(undefined);
     const a = document.createElement("a");
     a.href = url;
     a.download = file.filename;
@@ -379,7 +393,7 @@ export function CreationApp(
     };
   }, [en, page, light, state.showcaseRevision, taskPhase]);
   useEffect(() => {
-    if (!preview && !settings && !welcome) return;
+    if (!preview && !settings && !welcome && !exportChoice) return;
     const root = appRoot.current;
     const modal =
       root?.querySelector<HTMLElement>(".ci-modal:last-of-type") ??
@@ -405,6 +419,7 @@ export function CreationApp(
         e.preventDefault();
         setPreview(undefined);
         setSettings(false);
+        setExportChoice(undefined);
       }
       if (e.key !== "Tab") return;
       const nodes = focusable(),
@@ -426,7 +441,7 @@ export function CreationApp(
       modal.removeEventListener("keydown", key);
       previous?.focus();
     };
-  }, [!!preview, settings, welcome]);
+  }, [!!preview, settings, welcome, !!exportChoice]);
   useEffect(() => {
     if (new URLSearchParams(location.search).get("agent-isles") === "workbench")
       return;
@@ -451,46 +466,32 @@ export function CreationApp(
         el.inert = false;
       });
   }, []);
+  const latestJob = state.jobs.filter(j => j.workId === selected).at(-1);
+  useEffect(() => {
+    if (latestJob?.status === "ready" && latestJob.candidate) {
+      setMode("review");
+      setMobilePane("editor");
+    } else setMode(m => m === "review" ? "edit" : m);
+  }, [latestJob?.id, latestJob?.status, selected]);
   if (new URLSearchParams(location.search).get("agent-isles") === "workbench")
     return null;
   const work = state.works.find((w) => w.id === selected),
     job = state.jobs.filter((j) => j.workId === selected).at(-1),
     activeJob =
       job && ["queued", "generating", "validating"].includes(job.status);
-  const targets =
-    draft?.kind === "quiz"
-      ? draft.content.questions.map((x, i) => ({
-          id: x.id,
-          label: `${t("prompt")} ${i + 1}`,
-        }))
-      : draft?.kind === "card"
-        ? draft.content.sections.map((x, i) => ({
-            id: x.id,
-            label: `${t("text")} ${i + 1}`,
-          }))
-        : draft?.kind === "story"
-          ? draft.content.nodes.map((x, index) => ({
-              id: x.id,
-              label: `${t("nodes")} ${index + 1} · ${x.text.slice(0, 16)}`,
-            }))
-          : [];
-  const playable =
-    viewVersion?.data ??
+  const targets = draft ? outline(draft, en) : [];
+  const playable = viewVersion?.data ??
     (job?.status === "ready" && job.candidate ? job.candidate : valid);
-  const cover = (data: Content) => (
-    <div className={`ci-cover ${data.theme}`}>
-      <span>
-        {data.kind === "quiz" ? "?" : data.kind === "card" ? "✉" : "✦"}
-      </span>
-      <small>{t(data.kind)}</small>
-    </div>
-  );
+  const cover = (data: Content) => <Cover data={data} en={en} />;
+  const recent = state.works.filter(w => !w.deleted).sort((a,b) => b.updated.localeCompare(a.updated)).slice(0, 3);
+  const reviewStale = !!job && (!!dirty || job.revision !== work?.revision);
+  const selectItem = (id: string) => { setTarget(id); setMode("edit"); setViewVersion(undefined); setMobilePane("editor"); };
   const versionView = (v: Version) => (
     <div className="ci-version" key={v.id}>
       <strong>{new Date(v.created).toLocaleString()}</strong>
       <small>{v.summary}</small>
       <div className="ci-row">
-        <button onClick={() => setViewVersion(v)}>{t("try")}</button>
+        <button onClick={() => { setViewVersion(v); setMode("play"); }}>{t("try")}</button>
         <button
           disabled={busy}
           onClick={() =>
@@ -512,7 +513,7 @@ export function CreationApp(
     </div>
   );
   return (
-    <div ref={appRoot} className={`ci-app ${light ? "ci-light" : ""}`}>
+    <div ref={appRoot} className={`ci-app ${light ? "ci-light" : ""} ${page === "studio" ? "ci-in-studio" : ""}`}>
       <style>{styles}</style>
       {!light && (
         <iframe
@@ -573,7 +574,7 @@ export function CreationApp(
       {page === "home" && (
         <main className="ci-home">
           <section className="ci-hero">
-            <span className="ci-eyebrow">YOUR OWN LITTLE WORLD</span>
+            <span className="ci-eyebrow">{t("homeEyebrow")}</span>
             <h1>{t("tagline")}</h1>
             <p>{t("subtitle")}</p>
             <div className="ci-row">
@@ -605,6 +606,10 @@ export function CreationApp(
                 {t(worldState === "failed" ? "worldFailed" : "loading")}
               </small>
             )}
+          </section>
+          <section className="ci-recent">
+            <div className="ci-section-heading"><div><span className="ci-eyebrow">{t(recent.length ? "recentHint" : "sampleLabel")}</span><h2>{t(recent.length ? "recentWorks" : "startSmall")}</h2></div><button onClick={() => void go(recent.length ? "library" : "inspiration")}>{t(recent.length ? "viewAll" : "inspiration")} ↗</button></div>
+            <div className="ci-grid">{recent.length ? recent.map(w => <button className="ci-recent-work" key={w.id} onClick={() => void open(w)}>{cover(w.draft)}<span>{t("continue")} ↗</span></button>) : kinds.map(kind => <button className="ci-recent-work" key={kind} onClick={() => { setPreviewWork(undefined); setPreview(sample(kind,en)); }}>{cover(sample(kind,en))}<span>{t("try")} ↗</span></button>)}</div>
           </section>
           <section className="ci-showcase">
             <h2>
@@ -640,7 +645,7 @@ export function CreationApp(
       )}
       {page === "inspiration" && (
         <main className="ci-page">
-          <span className="ci-eyebrow">A SPARK TO START</span>
+          <span className="ci-eyebrow">{t("inspirationEyebrow")}</span>
           <h1>{t("inspiration")}</h1>
           <p>{t("briefHint")}</p>
           <div className="ci-toolbar">
@@ -688,6 +693,8 @@ export function CreationApp(
                           await flush();
                           load(await command<Work>({ op: "create", kind, en }));
                           setRequest(idea);
+                          setPartnerOpen(true);
+                          setMobilePane("partner");
                           await refresh();
                         })
                       }
@@ -792,7 +799,7 @@ export function CreationApp(
                     {new Date(w.updated).toLocaleString()} ·{" "}
                     {w.versions.length
                       ? `${w.versions.length} ${t("versions")}`
-                      : t("saved")}
+                      : t("draftLabel")}
                   </small>
                   <div className="ci-row">
                     {!trash && (
@@ -862,8 +869,8 @@ export function CreationApp(
                 </article>
               ))}
           </div>
-          {!state.works.some((w) => w.deleted === trash) && (
-            <p className="ci-empty">{t("empty")}</p>
+          {!state.works.some((w) => w.deleted === trash && (filter === "all" || w.draft.kind === filter) && w.draft.title.toLowerCase().includes(search.toLowerCase())) && (
+            <p className="ci-empty">{t(search || filter !== "all" ? "noResults" : "empty")}</p>
           )}
         </main>
       )}
@@ -873,11 +880,11 @@ export function CreationApp(
             <div>
               <strong>{draft.title || t("title")}</strong>
               <small aria-live="polite">
-                {t(saving ? "saving" : dirty ? "unsaved" : "saved")}
+                {t(saving ? "saving" : dirty ? "pendingSave" : "saved")}
               </small>
             </div>
             <div className="ci-row">
-              <button onClick={() => setVersions(!versions)}>
+              <button onClick={() => { setVersions(!versions); setMode("edit"); setTarget("all"); setMobilePane("editor"); }}>
                 {t("versions")}
               </button>
               <button
@@ -898,32 +905,93 @@ export function CreationApp(
               >
                 {t("export")} ↗
               </button>
-              <button
-                disabled={busy}
-                onClick={() => void run(() => download("json"))}
-              >
-                {t("backup")}
-              </button>
+              <details className="ci-more"><summary>{t("more")}</summary><div><button disabled={busy} onClick={() => void run(() => download("json"))}>{t("backup")}</button></div></details>
             </div>
           </div>
           <nav className="ci-mobile-switch" aria-label={t("editor")}>
-            {(["partner", "editor", "preview"] as const).map((pane) => (
+            {(["outline", "editor", "partner"] as const).map((pane) => (
               <button
                 key={pane}
                 aria-pressed={mobilePane === pane}
-                onClick={() => setMobilePane(pane)}
+                onClick={() => { setMobilePane(pane); if(pane === "partner") setPartnerOpen(true); }}
               >
                 {t(pane)}
               </button>
             ))}
           </nav>
-          <div className={`ci-columns ci-pane-${mobilePane}`}>
-            <aside className="ci-partner">
+          <div className={`ci-columns ci-pane-${mobilePane} ${partnerOpen ? "ci-with-partner" : ""}`}>
+
+            <aside className="ci-directory"><Outline data={draft} en={en} selected={target} onSelect={selectItem} /></aside>
+            <div className="ci-canvas">
+              <div className="ci-canvas-toolbar"><div className="ci-segment" aria-label={t("editor")}>
+                <button aria-pressed={mode === "edit"} onClick={() => { setMode("edit"); setViewVersion(undefined); }}>{t("editMode")}</button>
+                <button aria-pressed={mode === "play"} onClick={() => setMode("play")}>{t("playMode")}</button>
+                {job?.status === "ready" && job.candidate && <button aria-pressed={mode === "review"} onClick={() => setMode("review")}>{t("reviewMode")}</button>}
+              </div><button className="ci-ai-toggle" aria-pressed={partnerOpen} onClick={() => {setPartnerOpen(!partnerOpen); setMobilePane(partnerOpen ? "editor" : "partner");}}>✧ {t("partner")}</button></div>
+            <section className="ci-content" hidden={mode !== "edit"}>
+              <h2>
+                {target === "all" ? t("workSettings") : targets.find(x => x.id === target)?.label} <small>{t(draft.kind)}</small>
+              </h2>
+              {versions && (
+                <div className="ci-versions">
+                  {!work?.versions.length && <p>{t("noVersion")}</p>}
+                  {work?.versions.slice().reverse().map(versionView)}
+                </div>
+              )}
+              {issues(draft).length > 0 && <details className="ci-validation"><summary>{t("invalid")}</summary><ul>{issues(draft).map((x,i) => <li key={i}>{x}</li>)}</ul></details>}
+              <Editor data={draft} en={en} selected={target} onChange={mutate} />
+            </section>
+            <section className="ci-play" hidden={mode !== "play"}>
+              <div className="ci-row">
+                <h2>
+                  {viewVersion ? `${t("versions")} · ${new Date(viewVersion.created).toLocaleString()}` : job?.status === "ready" && job.candidate
+                    ? t("candidate")
+                    : t("preview")}
+                </h2>
+                <button onClick={() => setNarrow(!narrow)}>
+                  {t(narrow ? "wide" : "narrow")}
+                </button>
+                <button
+                  onClick={() => {
+                    setRestart(restart + 1);
+                    setViewVersion(undefined);
+                  }}
+                >
+                  {t("reset")}
+                </button>
+              </div>
+              {issues(draft).length > 0 && (
+                <details className="ci-validation">
+                  <summary>{t("invalid")}</summary>
+                  <ul>
+                    {issues(draft).map((x, i) => (
+                      <li key={i}>{x}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+              {playable && (
+                <iframe
+                  className={narrow ? "narrow" : ""}
+                  key={restart}
+                  title={t("preview")}
+                  sandbox="allow-scripts"
+                  srcDoc={render(playable, en)}
+                />
+              )}
+            </section>            {mode === "review" && job?.status === "ready" && job.candidate && <section className="ci-review">
+              <span className="ci-eyebrow">{t("candidate")}</span><h2>{t("reviewIntro")}</h2>
+              {reviewStale && <p className="ci-validation">{t("reviewStale")}</p>}
+              <div className="ci-review-actions"><button className="primary" disabled={busy || reviewStale} onClick={() => void run(() => act("adopt", {jobId: job.id}))}>{t("adopt")}</button><button disabled={busy} onClick={() => void run(() => act("discard", {jobId: job.id}))}>{t("discard")}</button><button onClick={() => { setViewVersion(undefined); setMode("play"); }}>{t("try")} ↗</button></div>
+              <p>{t("reviewHint")}</p><ChangeReview before={draft} after={job.candidate} en={en} />
+            </section>}
+            </div>
+            <aside className="ci-partner" hidden={!partnerOpen}>
               <img src="/agent-isles/brand/q-portrait.png" alt="" />
               <h2>{t("partner")}</h2>
-              <p>{t("briefHint")}</p>
-              <p className="ci-cost">{t("modelCost")}</p>
-              <div className="ci-conversation">
+              <button className="ci-partner-close" onClick={() => {setPartnerOpen(false); setMobilePane("editor");}} aria-label={t("hidePartner")}>×</button>
+              <small className="ci-cost">{t("modelCost")}</small>
+              <details className="ci-history"><summary>{t("conversation")}</summary><div className="ci-conversation">
                 {work?.history.map((h, i) => (
                   <p key={i} className={h.role}>
                     {h.role === "assistant" &&
@@ -933,6 +1001,7 @@ export function CreationApp(
                   </p>
                 ))}
               </div>
+              </details>
               <label className="ci-field">
                 {t("scope")}
                 <select
@@ -991,84 +1060,10 @@ export function CreationApp(
                       {t("cancel")}
                     </button>
                   )}
-                  {job.status === "ready" && job.candidate && (
-                    <>
-                      <p>
-                        {t("changes")}:{" "}
-                        {job.summary ? changeText(job.summary, en) : "—"}
-                      </p>
-                      <p>{t("reviewHint")}</p>
-                      <button
-                        className="primary"
-                        onClick={() =>
-                          void run(() => act("adopt", { jobId: job.id }))
-                        }
-                      >
-                        {t("adopt")}
-                      </button>
-                      <button
-                        onClick={() =>
-                          void run(() => act("discard", { jobId: job.id }))
-                        }
-                      >
-                        {t("discard")}
-                      </button>
-                    </>
-                  )}
+                  {job.status === "ready" && job.candidate && <button onClick={() => { setMode("review"); setMobilePane("editor"); }}>{t("reviewMode")} ↗</button>}
                 </div>
               )}
             </aside>
-            <section className="ci-content">
-              <h2>
-                {t("editor")} <small>{t(draft.kind)}</small>
-              </h2>
-              {versions && (
-                <div className="ci-versions">
-                  {!work?.versions.length && <p>{t("noVersion")}</p>}
-                  {work?.versions.slice().reverse().map(versionView)}
-                </div>
-              )}
-              <Editor data={draft} en={en} onChange={mutate} />
-            </section>
-            <section className="ci-play">
-              <div className="ci-row">
-                <h2>
-                  {job?.status === "ready" && job.candidate
-                    ? t("candidate")
-                    : t("preview")}
-                </h2>
-                <button onClick={() => setNarrow(!narrow)}>
-                  {t(narrow ? "wide" : "narrow")}
-                </button>
-                <button
-                  onClick={() => {
-                    setRestart(restart + 1);
-                    setViewVersion(undefined);
-                  }}
-                >
-                  {t("reset")}
-                </button>
-              </div>
-              {issues(draft).length > 0 && (
-                <details className="ci-validation">
-                  <summary>{t("invalid")}</summary>
-                  <ul>
-                    {issues(draft).map((x, i) => (
-                      <li key={i}>{x}</li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-              {playable && (
-                <iframe
-                  className={narrow ? "narrow" : ""}
-                  key={restart}
-                  title={t("preview")}
-                  sandbox="allow-scripts"
-                  srcDoc={render(playable, en)}
-                />
-              )}
-            </section>
           </div>
         </main>
       )}
@@ -1142,6 +1137,7 @@ export function CreationApp(
           </section>
         </div>
       )}
+      {exportChoice && <div className="ci-modal" role="dialog" aria-modal="true" aria-label={t("exportChoice")}><section className="ci-export-choice"><span className="ci-eyebrow">{t("export")}</span><h2>{t("exportChoice")}</h2><p>{t("exportChoiceHint")}</p><div className="ci-export-options"><button className="primary" disabled={busy || !!(draft && issues(draft).length)} onClick={() => void run(() => download(exportChoice, "save"))}>{t("saveThenExport")}</button><button disabled={busy} onClick={() => void run(() => download(exportChoice, "previous"))}>{t("exportPrevious")}<small>{work?.versions.at(-1) && new Date(work.versions.at(-1)!.created).toLocaleString()}</small></button><button disabled={busy} onClick={() => setExportChoice(undefined)}>{t("returnEditing")}</button></div></section></div>}
       {settings && (
         <div
           className="ci-modal ci-settings"
@@ -1169,7 +1165,7 @@ export function CreationApp(
               src="/agent-isles/brand/creation-island.svg"
               alt=""
             />
-            <span className="ci-eyebrow">WELCOME TO CREATION ISLAND</span>
+            <span className="ci-eyebrow">{t("welcomeEyebrow")}</span>
             <h1>{t("tagline")}</h1>
             <p>{t("subtitle")}</p>
             <p>{t("modelCost")}</p>
@@ -1198,6 +1194,7 @@ export function CreationApp(
         <div className="ci-receipt" role="status">
           <strong>{t("downloaded")}</strong>
           <span>{receipt.name}</span>
+          <small>{t("exportedVersion")} · {receipt.version}</small>
           <div className="ci-row">
             <button
               onClick={() =>
@@ -1216,7 +1213,7 @@ export function CreationApp(
             <a href={receipt.url} download={receipt.name}>
               {t("download")}
             </a>
-            <button onClick={() => setReceipt(undefined)}>×</button>
+            <button aria-label={t("close")} onClick={() => setReceipt(undefined)}>×</button>
           </div>
           <small>{t("fileLocation")}</small>
         </div>
