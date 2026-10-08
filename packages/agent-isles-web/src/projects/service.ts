@@ -1,5 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-agent'
+import type { Agent } from '@deepseek-ai/dsh-agent'
+import type {} from '@deepseek-ai/dsh-jobs'
+import { stopOwnedJobs } from './jobs.js'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
@@ -17,7 +19,7 @@ interface ProjectRecord { revision: number; achievements: Achievement[]; slots: 
 interface Build { projectId:string; versionId:string; directory:string; manifest:Manifest; log:string; createdAt:number }
 interface State { builds?:Record<string,Build>; version:1; projects: Record<string,ProjectRecord>; receipts: Record<string,{ fingerprint:string; result:unknown }> }
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[\w-]{1,160}$/.test(value) && !['__proto__','constructor','prototype'].includes(value)
-export const inject = ['workspaceRegistry','webServer','sessions']
+export const inject = ['workspaceRegistry','webServer','sessions','jobs']
 export function apply(ctx: Context) {
   ctx.inject(['systemPrompt'], c => c.effect(() => c.systemPrompt.section({ name:'creation-island:partner', order:50, text:'You are 阿启 (Aqi), the making partner in Creation Island. Work on real files in the current project using the available tools and actual permissions. Read existing files before editing. Do not claim a task result is verified without running checks. Never claim a URL is a verified preview: the host checks previews separately. User-confirmed saved achievements are separate from finishing a turn. Favor simple runnable Web projects for new ideas, retain existing project structure when editing. Do not run persistent preview servers yourself: provide a package.json dev/start script honoring PORT and HOST, or static index.html, for the host to run. Do not install dependencies or access outside the project by bypassing runtime approval. Shiye and Adu are local management interfaces, not additional agents. Respond in the user’s language.' }), 'creation-island persona'))
   const home = resolve(process.env.DSH_HOME ?? '.creation-island-home', 'open-projects')
@@ -38,27 +40,35 @@ export function apply(ctx: Context) {
     const workspace = ctx.workspaceRegistry.get(WorkspaceId(id)); if (!workspace) throw new Error('project'); return workspace
   }
   const record = (id:string) => state.projects[id] ??= { revision:0, achievements:[], slots:Array(6).fill(null), runs:[] }
-  let owner: { sessionId: string; projectId: string; run: Run } | undefined
+  let owner: { sessionId: string; projectId: string; run: Run; agent:Agent; finishing?:boolean } | undefined
   let maintenance = false
   const finish = (sessionId:string) => {
-    if (!owner || owner.sessionId !== sessionId) return
+    if (!owner || owner.sessionId !== sessionId || owner.finishing) return
     const current=owner
+    current.finishing=true
     void serial(async () => {
       current.run = record(current.projectId).runs.find(r=>r.id===current.run.id) ?? current.run
-      try { current.run.after = await scan(project(current.projectId).path,objects); current.run.state='finished'; const events=ctx.sessions.get(sessionId as import('@deepseek-ai/dsh-session').SessionId)?.snapshotEvents(); const ended=[...(events??[])].reverse().find(e=>e.type==='turn/end'); if(ended?.type==='turn/end' && ended.data.reason.kind!=='completed') current.run.state=ended.data.reason.kind==='error'?'failed':'interrupted' }
+      try { await stopOwnedJobs(ctx.jobs,current.agent); current.run.after = await scan(project(current.projectId).path,objects); current.run.state='finished'; const events=ctx.sessions.get(sessionId as import('@deepseek-ai/dsh-session').SessionId)?.snapshotEvents(); const ended=[...(events??[])].reverse().find(e=>e.type==='turn/end'); if(ended?.type==='turn/end' && ended.data.reason.kind!=='completed') current.run.state=ended.data.reason.kind==='error'?'failed':'interrupted' }
       catch (e) { current.run.state='failed'; current.run.error=(e as Error).message }
       await atomic(store,state)
-    }).catch(() => { current.run.state='failed'; current.run.error='storage' }).finally(() => { if (owner === current) owner=undefined })
+    }).catch(() => { current.run.state='failed'; current.run.error='storage' }).finally(() => { if (owner === current) {
+      const live=ctx.jobs.list(current.agent).some(j=>j.ownerSession===sessionId&&['running','stopping'].includes(j.status))
+      if(!live) owner=undefined
+      else current.finishing=false
+    } })
   }
+  ctx.effect(()=>ctx.jobs.onJobsChanged(agent=>{
+    if(agent && owner?.sessionId===agent.session.id && owner.run.state!=='running' && !owner.finishing) finish(agent.session.id)
+  }), 'creation-projects: late job settlement')
   ctx.on('agent/pre-step', async ({agent,turn,signal},next) => {
     await initialized
     const sessionId=agent.session.id
     const workspace=ctx.workspaceRegistry.list().find(p=>p.sessionIds.includes(sessionId))
     if (!workspace) return next()
-    if (maintenance || owner && owner.sessionId!==sessionId) throw new Error('Creation Island: another project is working. Please retry when it finishes. / 另一个项目正在工作，请稍后重试。')
+    if (maintenance || owner && (owner.sessionId!==sessionId || owner.finishing || owner.run.state!=='running')) throw new Error('Creation Island: another project is working. Please retry when it finishes. / 另一个项目正在工作，请稍后重试。')
     if (!owner) {
       const run: Run = { id:randomUUID(),projectId:workspace.id,sessionId,turn,state:'running',startedAt:Date.now() }
-      owner={ sessionId,projectId:workspace.id,run }
+      owner={ sessionId,projectId:workspace.id,run,agent }
       try { await serial(async()=> { run.before=await scan(workspace.path,objects); record(workspace.id).runs.push(run); await atomic(store,state) }) }
       catch(e) { owner=undefined; throw e }
     }
@@ -85,7 +95,11 @@ export function apply(ctx: Context) {
     if(!validId(cmd.requestId)) throw new Error('request')
     const fingerprint=JSON.stringify({...cmd,requestId:undefined})
     const previous=state.receipts[cmd.requestId]
-    if(previous) { if(previous.fingerprint!==fingerprint) throw new Error('conflict'); return previous.result }
+    if(previous) {
+      if(previous.fingerprint!==fingerprint) throw new Error('conflict')
+      if(cmd.op==='preview') {const saved=previous.result as import('./preview.js').Preview;return previews.records.get(saved.id)??{...saved,state:'stopped',url:undefined}}
+      return previous.result
+    }
     const id=String(cmd.projectId ?? '')
     if(cmd.op!=='create') project(id)
     let result:unknown
@@ -167,10 +181,10 @@ export function apply(ctx: Context) {
           const text=await textObject(objects,file.hash)
           if(text && /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:sk-[A-Za-z0-9_-]{24,}|gh[pousr]_[A-Za-z0-9]{30,}|AKIA[A-Z0-9]{16})/.test(text)) throw new Error('sensitive-export')
         }
-        const instructions = `# ${a.title}\n\nSaved: ${new Date(a.createdAt).toISOString()}\nVersion: ${a.id}\n\n${a.note}\n\nSource snapshot. Dependencies, credentials and Git history are not included.\n源码快照，不包含依赖、凭据和 Git 历史。\n\n${(await recipes(source)).map(r=>r.command).join('\n') || 'No verified startup recipe. / 未检测到已验证的启动方式。'}\n\nFor Node projects install the lockfile-matched dependencies first; inspect package.json scripts and configure required services.\nNode 项目需按锁文件安装依赖，核对脚本并配置所需服务。\n\nExcluded / 排除项:\n${exported.excluded.join('\n')}\n`
+        const instructions = `# ${a.title}\n\nSaved: ${new Date(a.createdAt).toISOString()}\nVersion: ${a.id}\n\n${a.note}\n\n${built?'Verified static build. Serve the project directory using an HTTP static server; double-clicking files may not work. / 已验证静态构建：使用 HTTP 静态服务部署 project 目录，不能保证双击运行。':'Source snapshot. Dependencies, credentials and Git history are not included.'}\n源码快照，不包含依赖、凭据和 Git 历史。\n\n${(await recipes(source)).map(r=>r.command).join('\n') || 'No verified startup recipe. / 未检测到已验证的启动方式。'}\n\nFor Node projects install the lockfile-matched dependencies first; inspect package.json scripts and configure required services.\nNode 项目需按锁文件安装依赖，核对脚本并配置所需服务。\n\nExcluded / 排除项:\n${exported.excluded.join('\n')}\n`
         await writeFile(resolve(target,'RUNNING.md'),instructions)
         await writeFile(resolve(target,'manifest.json'),JSON.stringify(exported,null,2))
-        let name='source.tar.gz'
+        let name=cmd.kind==='static'?'static.tar.gz':'source.tar.gz'
         if(cmd.kind==='html') {
           const paths=Object.keys(a.manifest.files)
           if(paths.length!==1 || paths[0]!=='index.html') throw new Error('not-self-contained')
@@ -187,9 +201,9 @@ export function apply(ctx: Context) {
     await atomic(store,state)
     return result
   }
-  ctx.effect(()=>ctx.webServer.register({kind:'prefix',path:'/creation/projects/',handler:async(req,res)=> {
+  ctx.effect(()=>ctx.webServer.register({kind:'prefix',path:'/creation/projects',handler:async(req,res)=> {
     const reply=(code:number,value:unknown)=> {res.writeHead(code,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(value))}
-    if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress??'') || !/^(127\.0\.0\.1|localhost|\[::1\]):\d+$/.test(req.headers.host??'') || req.headers['x-creation-projects']!=='1' || req.headers.origin && req.headers.origin!==`http://${req.headers.host}`) {reply(403,{error:'origin'});return}
+    if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress??'') || !/^127\.0\.0\.1:\d+$/.test(req.headers.host??'') || req.headers['x-creation-projects']!=='1' || req.headers.origin && req.headers.origin!==`http://${req.headers.host}`) {reply(403,{error:'origin'});return}
     try {
       await initialized
       const url=new URL(req.url??'/', 'http://localhost'), id=url.searchParams.get('project')??''
@@ -205,7 +219,7 @@ export function apply(ctx: Context) {
       if(url.pathname.endsWith('/status')) {reply(200,{active:owner?{projectId:owner.projectId,sessionId:owner.sessionId}:null});return}
       if(url.pathname.endsWith('/download')) {
         const exportId=url.searchParams.get('export')??'', name=url.searchParams.get('name')??''
-        if(!validId(exportId) || !['source.tar.gz','index.html'].includes(name) || !state.receipts[exportId]) throw new Error('export')
+        if(!validId(exportId) || !['source.tar.gz','static.tar.gz','index.html'].includes(name) || !state.receipts[exportId]) throw new Error('export')
         const bytes=await readFile(resolve(home,'exports',exportId,name));res.writeHead(200,{'content-type':'application/octet-stream','content-disposition':`attachment; filename="${name}"`});res.end(bytes);return
       }
       project(id)

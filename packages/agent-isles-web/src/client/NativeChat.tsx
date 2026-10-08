@@ -12,11 +12,13 @@ export function NativeChat({ sessionId, t }: { sessionId: string; t: AgentIslesT
     document.head.append(style)
     const place = () => {
       const box = element.getBoundingClientRect()
+      const clip = element.closest('.ci-body')?.getBoundingClientRect()
+      const inset = clip ? `${Math.max(0,clip.top-box.top)}px ${Math.max(0,box.right-clip.right)}px ${Math.max(0,box.bottom-clip.bottom)}px ${Math.max(0,clip.left-box.left)}px` : '0px'
       style.textContent = `
         [data-agent-isles-town] [data-slot="conversation"] {
           display: block !important; position: fixed; z-index: 21;
           left: ${box.left}px; top: ${box.top}px; width: ${box.width}px; height: ${box.height}px;
-          visibility: visible; pointer-events: auto; overflow: hidden;
+          visibility: visible; pointer-events: auto; overflow: hidden; clip-path: inset(${inset});
         }
         [data-agent-isles-town] [data-slot="conversation"] > [data-phase] {
           --dsh-chat-content-width: 100%; --dsh-composer-side-clearance: 0px;

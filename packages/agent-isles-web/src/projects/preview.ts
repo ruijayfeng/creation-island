@@ -39,16 +39,17 @@ export class Previews {
     for (const old of this.records.values()) if (old.projectId === projectId) await this.stop(old.id)
     const record: Preview = { id: randomUUID(), projectId, versionId, state:'starting', command:recipe.command, log:'', startedAt: Date.now() }
     this.records.set(record.id, record)
+    try {
     const portServer = createServer()
     await new Promise<void>((done, reject) => { portServer.once('error', reject); portServer.listen(0, '127.0.0.1', done) })
     const port = (portServer.address() as {port:number}).port
     await new Promise<void>(done => portServer.close(() => done()))
-    const url = `http://127.0.0.1:${port}/`
+    const url = `http://localhost:${port}/`
     if (recipe.kind === 'static') {
       const base = await safePath(root, recipe.directory || '.')
       const server = createServer(async (req,res) => {
         try {
-          if (!['GET','HEAD'].includes(req.method ?? '') || req.headers.host !== `127.0.0.1:${port}`) { res.writeHead(403); res.end(); return }
+          if (!['GET','HEAD'].includes(req.method ?? '') || ![`localhost:${port}`,`127.0.0.1:${port}`].includes(req.headers.host??'')) { res.writeHead(403); res.end(); return }
           const pathname = decodeURIComponent(new URL(req.url ?? '/', url).pathname)
           let file = await safePath(base, pathname.replace(/^\//,'') || 'index.html')
           if ((await stat(file)).isDirectory()) file = await safePath(base, `${pathname.replace(/^\//,'')}/index.html`)
@@ -72,10 +73,12 @@ export class Previews {
       child.on('exit', code => { if (record.state !== 'stopped') { record.state='failed'; record.log += `\nexit ${code}` } })
     }
     for (let i=0;i<80 && record.state==='starting';i++) {
-      try { const response = await fetch(url, { signal:AbortSignal.timeout(500), redirect:'manual' }); if (response.status >= 200 && response.status < 400) { record.state='ready'; record.url=url; break } } catch { /* starting */ }
+      try { const response = await fetch(`http://127.0.0.1:${port}/`, { signal:AbortSignal.timeout(500), redirect:'manual' }); if (response.status >= 200 && response.status < 400) { record.state='ready'; record.url=url; break } } catch { /* starting */ }
       await new Promise(done => setTimeout(done,250))
     }
     if (record.state === 'starting') { await this.stop(record.id); record.state='failed'; record.log += '\nHTTP check timed out. The server must use PORT / HOST, or Vite.' }
+    if(record.state==='failed') { const log=record.log; await this.stop(record.id); record.state='failed'; record.log=log }
+    } catch(error) { await this.stop(record.id); record.state='failed'; record.log=(error as Error).message }
     return record
   }
 }

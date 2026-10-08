@@ -14,7 +14,8 @@ export function excluded(name: string) {
 export async function safePath(root: string, path: string) {
   if (isAbsolute(path) || path.includes('\0') || path.split(/[\\/]/).some(excluded)) throw new Error('path')
   const target = await realpath(resolve(root, path))
-  if (!inside(await realpath(root), target)) throw new Error('path')
+  const actualRoot=await realpath(root)
+  if (!inside(actualRoot, target) || relative(actualRoot,target).split(sep).some(excluded)) throw new Error('path')
   return target
 }
 export async function atomic(file: string, value: unknown) {
@@ -66,7 +67,7 @@ export async function materialize(manifest: Manifest, objects: string, target: s
 export function diff(before: Manifest, after: Manifest) {
   return [...new Set([...Object.keys(before.files), ...Object.keys(after.files)])].sort().flatMap(path => {
     const a = before.files[path], b = after.files[path]
-    return a?.hash === b?.hash ? [] : [{ path, kind: !a ? 'added' : !b ? 'deleted' : 'modified', before: a?.hash, after: b?.hash }]
+    return a?.hash === b?.hash && a?.mode === b?.mode ? [] : [{ path, kind: !a ? 'added' : !b ? 'deleted' : 'modified', before: a?.hash, after: b?.hash }]
   })
 }
 export async function textObject(objects: string, hash?: string) {

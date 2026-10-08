@@ -1,47 +1,31 @@
 # 创作岛
 
-> **方向更新（2026-10-08）：** 用户已选择回到“小岛主交互的开放式 AI 项目创作”。当前正在整理终态方案，尚未开发；下方可运行版本与使用说明仍属于三类作品版。新方向请先读 [产品终态](docs/product-spec.md)、[最终画面与体验](docs/product-experience.md) 和 [纠正说明](docs/direction-reset.md)，不要把计划当作已有功能。
+创作岛是以三维小岛为主界面的开放式 AI 项目创作环境。在造物台与阿启制作真实项目，由拾页找回项目和会话，由阿渡查看文件、改动与交付。支持网站、交互工具、轻量 Web 游戏及已有项目修改；其他技术栈按实际环境准备。
 
-创作岛是一款本地 AI 陪伴式互动创作产品。用户在小岛中制作问答小游戏、互动贺卡和分支故事，预览和修改后保存版本，并导出给别人独立使用。
+**当前为 0.2.0 开发候选版。** 新主流程已接通并通过本机集中检查；最终交付和未验证范围见 [开发进度](docs/progress.md) 与 [开放项目验收](docs/open-project-acceptance.md)。原三类作品数据和兼容入口保留，历史验收不代表新方向通过。
 
-**当前状态：0.1.0 开发候选版已实现，已完成本机集中验收，跨设备检查待完成。** 本目录是开发主工作区；原 isles 仓库保留为来源和参考，Boss 中的旧规划作为历史材料。
+## 使用与开发
 
-## 仓库与开发起点
+macOS Apple Silicon 桌面包内置 Node/npm、固定 Harness 运行时和岛屿资源。模型服务需自行配置。操作见 [使用说明](docs/user-guide.md) / [English guide](docs/user-guide.en.md)。
 
-GitHub 仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creation-island)，默认分支为 `main`，公开仓库。
+开发要求 Node.js `^22.19.0` 或 `>=24.0.0`、Corepack Yarn `4.18.0`：
 
-已导入公开 MIT 基线，三类作品的创作、编辑、版本、收藏及导出已接入。当前实现与验收状态见[开发进度](docs/progress.md)，应用操作见[使用说明](docs/user-guide.md)。
+```sh
+corepack yarn install --immutable
+corepack yarn build:world  # Godot 4.7.2 + Web export templates
+corepack yarn dev:web
+```
 
-开发环境使用 Node.js `^22.19.0` 或 `>=24.0.0` 及 Corepack Yarn `4.18.0`：先运行 `corepack yarn install --immutable`，再运行 `corepack yarn dev:web`。世界导出需要 Godot，运行 `corepack yarn build:world`。macOS ARM64 候选包通过 `corepack yarn build:desktop:darwin` 生成。
+Apple Silicon 打包：`corepack yarn build:desktop:darwin`。独立解压后执行 `bash apps/desktop/verify-darwin.sh <解压目录>`；新项目的集中测试说明见验收记录。
 
-集中验收包含 20 项新产品测试和 18 组真实模型场景；结构检查与人工内容质量分别记录，见 [验收记录](docs/acceptance.md)。
+默认新会话使用 `workspace-write + ask`，已有会话保留实际权限。模型会修改真实文件；停止、任务结束、预览可访问、保存成果是不同事实。恢复默认建立副本，成果和导出引用明确保存版本。源码包、已构建静态包与自包含单文件 HTML 分别说明运行条件。
 
-## 文档入口
+本版本不提供默认公网部署、云同步、Apple 公证或任意技术栈一键运行承诺。预览脚本和构建是用户明确确认的本机代码执行；请核对脚本。新主流程无需进入高级工作台。
 
-| 文档 | 解决的问题 |
-| --- | --- |
-| [产品终态与交互规格](docs/product-spec.md) | 最终做成什么，界面和用户行为是什么 |
-| [最终画面与使用体验](docs/product-experience.md) | 岛上各位置、人物、面板、预览和交付如何形成连续体验 |
-| [品牌与角色设计](docs/brand-and-characters.md) | 新角色命名、外观、对白和海岛创作工坊的统一表达 |
-| [方向纠正说明](docs/direction-reset.md) | 哪些保留、哪些退出主流程，旧作品如何兼容，哪些条件待核对 |
-| [现有版本技术结构](docs/architecture.md) | 三类作品版的实现参考；开放项目的新结构尚待设计 |
-| [后续实施边界](docs/implementation-plan.md) | 新方向保留的基础、待改造范围和验证原则 |
-| [视觉与素材方案](docs/assets-and-visuals.md) | 视觉方向、素材制作方式、尺寸和落地位置 |
-| [素材登记表](docs/asset-register.csv) | 来源、许可、采用状态及后续归档 |
-| [统一测试与交付](docs/testing-and-release.md) | 整体开发完成后怎样测试、修复和确认交付 |
-| [源码基线与导入](docs/source-baseline.md) | 从哪里开始，怎样保留来源并保护现有文档 |
-| [开发进度](docs/progress.md) | 当前完成到哪里，剩余项和问题是什么 |
+## 文档与来源
 
-开始开发时依次阅读产品规格、源码基线和开发执行顺序。实施某个模块时再读取对应技术或素材章节。开发约定见 [AGENTS.md](AGENTS.md)。
+- [产品终态](docs/product-spec.md)、[体验](docs/product-experience.md)、[品牌与角色](docs/brand-and-characters.md)
+- [技术结构](docs/architecture.md)、[执行边界](docs/implementation-plan.md)、[集中测试](docs/testing-and-release.md)
+- [素材登记](docs/asset-register.csv)、[来源基线](docs/source-baseline.md)、[第三方声明](THIRD_PARTY_NOTICES.md)
 
-## 已确定的交付范围
-
-本次交付 macOS Apple Silicon 本地桌面应用，内置运行环境，用户通过向导配置自己的模型服务。三种作品共用创作、修改、收藏、版本和导出流程。保留小岛与伙伴，增加作品展示，并提供轻量入口。
-
-成果支持独立可玩的 HTML 和可继续编辑的 `.isle.json` 作品包。公网发布、账号同步、其他平台和任意代码生成不属于本次交付。
-
-## 开发与测试原则
-
-按用户最新要求，先完成整体开发，再统一测试和修复 bug。开发中只做必要的构建、启动和当前连接点检查；运行时校验、错误处理和版本保护在实现功能时一并做好。详细执行方式统一维护在测试文档。
-
-本目录不安排时间表，不包含简历包装任务。功能范围只在产品规格维护，实际状态只在开发进度维护。
+当前仓库：[ruijayfeng/creation-island](https://github.com/ruijayfeng/creation-island)。原 isles 仅作只读参考；固定 `deepseek-harness/` 与 vendor 归档未修改。开发约定见 [AGENTS.md](AGENTS.md)。

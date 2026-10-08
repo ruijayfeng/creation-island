@@ -24,7 +24,7 @@ writeFileSync(
     '创作岛 macOS Apple Silicon 本地预览版',
     '双击「Creation Island.app」进入。菜单栏图标可重新打开或退出。',
     '数据存放在 ~/Library/Application Support/Creation Island/data，删除应用时保留。',
-    '已内置 Node 和固定 DSH 运行时。创作无需安装开发工具；AI 模型服务需自行配置。',
+    '已内置 Node、npm 和固定 DSH 运行时。AI 模型需自行配置；项目依赖、其他技术栈及系统工具按实际需求准备。',
     '预览版未签名：若 Gatekeeper 拦截，请在系统设置中允许，或右键打开。',
     '第三方依赖许可证随 node_modules、runtime 和世界资源提供。',
     '',
@@ -44,8 +44,8 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
   <key>CFBundleName</key><string>creation-island</string>
   <key>CFBundleDisplayName</key><string>Creation Island</string>
   <key>CFBundleIdentifier</key><string>com.jayfeng.creation-island</string>
-  <key>CFBundleVersion</key><string>0.1.0</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundleVersion</key><string>0.2.0</string>
+  <key>CFBundleShortVersionString</key><string>0.2.0</string>
   <key>CFBundleExecutable</key><string>creation-island</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleIconFile</key><string>creation-island.icns</string>
@@ -77,7 +77,7 @@ const compile = spawnSync(
 if (compile.status !== 0) throw new Error('Swift 启动器编译失败')
 chmodSync(binary, 0o755)
 
-writeFileSync(path.join(app, 'BUILD.json'), JSON.stringify({ product: 'Creation Island', version: '0.1.0', arch: process.arch, commit: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(), builtAt: new Date().toISOString() }, null, 2))
+writeFileSync(path.join(app, 'BUILD.json'), JSON.stringify({ product: 'Creation Island', version: '0.2.0', arch: process.arch, commit: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(), builtAt: new Date().toISOString() }, null, 2))
 const zip = path.join(out, 'creation-island-darwin-arm64.zip')
 const ditto = spawnSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', app, zip], { stdio: 'inherit' })
 if (ditto.status !== 0) {

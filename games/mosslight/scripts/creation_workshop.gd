@@ -73,12 +73,15 @@ func _ready() -> void:
 		)
 		places.append(body)
 		var label := Label3D.new()
+		label.no_depth_test = true
+		label.render_priority = 110
 		label.font = FONT
 		label.position.y = 2.8
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.font_size = 32
-		label.pixel_size = .008
-		label.outline_size = 8
+		label.font_size = 40
+		label.pixel_size = .010
+		label.outline_size = 10
+		label.outline_modulate = Color("243f38")
 		body.add_child(label)
 		labels.append(label)
 		if i in [1,2]: person(body,ids[i])

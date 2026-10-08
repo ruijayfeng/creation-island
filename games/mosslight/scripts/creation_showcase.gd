@@ -27,6 +27,8 @@ func _ready() -> void:
 		collision.shape = shape
 		body.add_child(collision)
 		var label := Label3D.new()
+		label.no_depth_test = true
+		label.render_priority = 110
 		label.font = preload("res://assets/fonts/CreationTitles.ttf")
 		label.text = "%02d" % (i + 1)
 		label.position.y = 0.8

@@ -1,4 +1,12 @@
-> Creation Island: the current target is macOS Apple Silicon. Build with `corepack yarn build:desktop:darwin`, verify with `corepack yarn verify:desktop:darwin`. The bundle embeds an official Node runtime verified against its published SHA-256. App data is isolated under `~/Library/Application Support/Creation Island/data`. The instructions below describe the inherited baseline and are historical.
+# Creation Island 0.2.0 desktop candidate
+
+The current target is macOS Apple Silicon. Build Web and world assets, then run `corepack yarn build:desktop:darwin`. Independently extract the ZIP and run `bash apps/desktop/verify-darwin.sh <extracted directory>`, followed by new-project workflow checks with isolated app data. Node/npm come from the same official archive with verified SHA-256.
+
+Open Creation Island.app; the menu bar item reopens or quits. Data lives under `~/Library/Application Support/Creation Island/data`. Models, framework dependencies and other stack tools depend on the project. New sessions default to workspace-write + ask. The candidate has no Apple Developer signature or notarization.
+
+See the [guide](../../docs/user-guide.en.md). The inherited Windows/Intel instructions below are historical and do not declare platform support for this version.
+
+---
 
 # agent-isles desktop launcher (local preview)
 

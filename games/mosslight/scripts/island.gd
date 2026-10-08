@@ -1056,7 +1056,7 @@ func _process(delta: float) -> void:
 		coder_completion_recall_left -= delta
 		if coder_completion_recall_left <= 0:
 			coder_completion_recall_left = -1.0
-			if sanctuary_computer.can_remote_grab():
+			if not embedded_mode and not agent_isles_connected and sanctuary_computer.can_remote_grab():
 				sanctuary_computer.remote_grab(true)
 	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	if mouse_was_captured and not captured and view_mode != ViewMode.OVERVIEW:

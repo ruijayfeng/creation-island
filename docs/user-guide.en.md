@@ -1,32 +1,30 @@
-# Creation Island user guide
+# Creation Island guide
 
-Creation Island runs on macOS Apple Silicon. Extract the release folder, keep its contents together, and open `Creation Island.app`. The ◒ menu bar item reopens the interface or stops the service. This development candidate is not notarized; macOS may require allowing it in System Settings on first launch.
+Creation Island 0.2.0 runs on Apple Silicon macOS. Keep the extracted folder together and open `Creation Island.app`. Use its menu bar icon to reopen or quit. This candidate has no Apple Developer signature or notarization.
 
-## Make your first work
+## Create on the island
 
-1. Play a quiz, card or branching story in Inspiration, then choose Make my version.
-2. Choose settings, a question, a section or a story node in the outline. Edit one part at a time; drafts save automatically. Switch between Edit and Play in the central workspace.
-3. For AI, configure your own provider, model and key in Model settings and test the connection. Provider usage charges may apply.
-4. Open Your companion and describe the recipient and content. The outline selection becomes the AI edit scope; you can also select Whole work. Review before/after content and play the proposal, then adopt or discard.
-5. Save a version to create a recoverable snapshot. Island displays reference saved versions.
-6. Export playable HTML for an offline desktop browser. Choose More actions → Back up editable work to import and revise later.
+1. Click Aqi or “Aqi · Create”. Name a project, enter an idea, create its separate directory, then send the request. Shiye can open an existing folder through the picker or an absolute path. Opening never installs dependencies or runs commands.
+2. Configure your provider in Model settings. The native composer supports attachments, models and permissions. New sessions default to workspace write with approval when required; existing sessions retain their actual permissions.
+3. Aqi changes real files. Review each requested command and scope before allowing or denying it. Closing, returning or focusing only changes layout; “Stop turn” cancels. Only one turn runs at a time, without a cross-project queue.
+4. Preview lists detected static directories or Node scripts. Confirm a command to start it; the host verifies HTTP access. Reachability does not prove functionality, so try the result. Continue the same conversation below the preview to request changes.
+5. Adu shows files and actual changes. Save an achievement when satisfied, describing requirements, then select one of six display slots. Finishing a turn does not save an achievement.
+6. Review the saved file list and exclusions before exporting source. A successful build enables static export. Single HTML export requires a conservative self-containment check.
 
-Incomplete answers or invalid story paths show validation details and retain the previous valid preview. Complete these fields before saving a version or exporting. Authors should confirm factual model output.
+## History and delivery
 
-If the draft differs from the saved version, explicitly choose Save a new version & export or Export last saved version. Back to editing and Escape do not export. The receipt shows the exported version time.
+Achievements are immutable snapshots. Historical previews run separate copies of their saved version. Restore creates a new project directory, preserving the original files, Git history and uncommitted work. Opening conversations, switching projects and restarting never sends a request automatically. Interrupted work needs an explicit continuation.
 
-On narrow windows, switch between Outline, Content & style and Your companion. Story route links navigate directly to their target node.
+Source archives contain `project/`, a hash manifest and running instructions. Git history, dependency caches, recognized credentials and symbolic links are excluded. Saving stops above 64 MiB per file, 1 GiB total or 50,000 entries. Review exports: exclusion rules cannot identify every private file.
 
-## Storage and recovery
+Node preview scripts and dependency installation/build are explicit approvals to execute local code; inspect the scripts. Builds run in a separate achievement copy. Other stacks require their own environment. Public deployment is not included. Downloads use your browser; internal data defaults to `~/Library/Application Support/Creation Island/data`.
 
-Works, model settings and logs are under `~/Library/Application Support/Creation Island/data`. Exports are in its `exports` subfolder; choose Show in Finder after export. Do not manually edit internal files while the app is running. Use editable packages for work backups.
+Previews use a different local origin from the host, without host cookies or access to the world bridge. Browser storage belongs to that preview origin and is not a reliable backup. Starting a new preview changes its port, so stored browser data may not appear in the new origin.
 
-Continuing from a version restores the draft without deleting history. Deleted works first enter the recycle bin; permanent deletion is irreversible. Interrupted generation does not automatically resume or charge again after restart. Editing during generation invalidates the older proposal.
+## Access and compatibility
 
-Fixed navigation remains available if the world fails to load. Light view disables the 3D background. Motion follows system preferences; each player also provides a Reduce motion control.
+Characters, shortcuts and nearby interactions open the same panels without waiting for movement or a story. Esc closes panels. Keyboard shortcuts, narrow layouts, light mode and reduced motion are available. Shortcut buttons remain usable when the world fails to load; find light mode under “?”.
 
-## Scope
+Legacy interactive works keep the original quiz, card and branching story data and export format. They are not automatically converted. The advanced workbench is optional.
 
-Three interactive work types and three themes are supported. Arbitrary code generation, hosted sharing links, cloud accounts and multiplayer communities are outside this release. See progress and acceptance records for the distinction between implemented and verified features.
-
-The bundled runtime requires macOS 13.5 or later. This build was tested on macOS 26.5.1 / Apple Silicon; other OS versions have not been verified.
+Bundled Node/npm and the pinned runtime start the app and static projects. Framework dependencies, model accounts and system tools depend on the project. The runtime requires macOS 13.5 or later; consult the open-project acceptance record for tested environments and cross-device limitations.

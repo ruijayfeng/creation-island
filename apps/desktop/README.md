@@ -1,4 +1,12 @@
-> 创作岛当前目标为 macOS Apple Silicon。使用 `corepack yarn build:desktop:darwin` 构建，`corepack yarn verify:desktop:darwin` 验证。包内使用官方 Node 运行时并核对官方 SHA-256，数据隔离在 `~/Library/Application Support/Creation Island/data`。以下为继承基线的历史说明。
+# 创作岛 0.2.0 桌面候选包
+
+当前目标为 macOS Apple Silicon。先构建 Web 和世界，再运行 `corepack yarn build:desktop:darwin`。对 ZIP 独立解压目录执行 `bash apps/desktop/verify-darwin.sh <解压目录>`，并使用独立数据目录检查新项目主流程。Node/npm 来自校验 SHA-256 的同一官方归档。
+
+双击 Creation Island.app；菜单栏可重新打开或退出。数据位于 `~/Library/Application Support/Creation Island/data`。模型、框架依赖及其他技术栈工具按实际需求配置。新会话默认 workspace-write + ask。候选包未作 Apple 签名、公证。
+
+使用说明见 [项目指南](../../docs/user-guide.md)。以下保留上游 Windows/Intel 说明，不是本版本的平台支持声明。
+
+---
 
 # agent-isles 桌面启动器（本地预览版）
 

@@ -2,7 +2,8 @@ import { execFileSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 
 export const DOCUMENT_PAIRS = Object.freeze([
-  ['README.md', 'README.zh-CN.md'],
+  ['README.en.md', 'README.md'],
+  ['docs/user-guide.en.md', 'docs/user-guide.md'],
   ['CHANGELOG.en.md', 'CHANGELOG.md'],
   ['CODE_OF_CONDUCT.en.md', 'CODE_OF_CONDUCT.md'],
   ['CONTRIBUTING.en.md', 'CONTRIBUTING.md'],

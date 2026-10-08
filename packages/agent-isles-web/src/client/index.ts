@@ -112,7 +112,7 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
       }
       const sessionId = await ctx.sessions.create({ workspaceId: workspace.workspaceId, sessionId: crypto.randomUUID() as SessionId })
       const renamed = await ctx.sessions.binding(sessionId)?.session.rename(
-        `${RESIDENT_NAMES[residentId]} · ${workspace.title}`)
+        `${t('resident.coder.name')} · ${workspace.title}`)
       if (renamed !== undefined && !renamed.ok) {
         console.warn(`agent-isles: resident session rename failed: ${renamed.error.message}`)
       }
