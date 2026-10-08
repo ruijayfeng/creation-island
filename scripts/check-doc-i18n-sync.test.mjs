@@ -4,7 +4,7 @@ import test from 'node:test'
 import { findUnsyncedDocumentPairs } from './check-doc-i18n-sync.mjs'
 
 test('accepts changes to both documents in a language pair', () => {
-  assert.deepEqual(findUnsyncedDocumentPairs(['README.md', 'README.zh-CN.md']), [])
+  assert.deepEqual(findUnsyncedDocumentPairs(['README.md', 'README.en.md']), [])
 })
 
 test('rejects an English-only documentation change', () => {
@@ -32,7 +32,7 @@ test('normalizes Windows paths and ignores unrelated files', () => {
 
 test('reports every unsynchronized pair', () => {
   assert.deepEqual(findUnsyncedDocumentPairs(['README.md', 'CHANGELOG.md']), [
-    { changed: 'README.md', missing: 'README.zh-CN.md' },
+    { changed: 'README.md', missing: 'README.en.md' },
     { changed: 'CHANGELOG.md', missing: 'CHANGELOG.en.md' },
   ])
 })

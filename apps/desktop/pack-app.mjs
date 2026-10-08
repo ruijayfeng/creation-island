@@ -86,7 +86,6 @@ export async function embedNodeRuntime(app, { binaryName }) {
   mkdirSync(path.join(app, 'runtime'), { recursive: true })
   cpSync(path.join(extracted, 'bin/node'), path.join(app, 'runtime', binaryName))
   cpSync(path.join(extracted, 'lib/node_modules/npm'), path.join(app, 'runtime/lib/node_modules/npm'), { recursive: true })
-  cpSync(path.join(extracted, 'bin/npm'), path.join(app, 'runtime/npm'), { dereference: true })
   // npm-cli resolves its library relative to this launcher location.
   writeFileSync(path.join(app, 'runtime/npm'), '#!/bin/sh\nexec "$(dirname "$0")/node" "$(dirname "$0")/lib/node_modules/npm/bin/npm-cli.js" "$@"\n', { mode: 0o755 })
   cpSync(path.join(extracted, 'LICENSE'), path.join(app, 'runtime/LICENSE'))
