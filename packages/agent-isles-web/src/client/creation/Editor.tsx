@@ -1,21 +1,28 @@
 import type { Content } from "../../creation/content.js";
+import { outline } from "./presentation.js";
 import { tr } from "./words.js";
 export function Editor({
   data,
   onChange,
   en,
   selected = "all",
+  onSelect,
 }: {
   data: Content;
   onChange(d: Content): void;
   en: boolean;
   selected?: string;
+  onSelect?(id: string): void;
 }) {
   const t = tr(en);
   const change = (f: (d: Content) => void) => {
     const next = structuredClone(data);
     f(next);
     onChange(next);
+    const added = outline(next, en).find(
+      (x) => !outline(data, en).some((old) => old.id === x.id),
+    );
+    if (added) onSelect?.(added.id);
   };
   const field = (
     label: string,
@@ -38,36 +45,38 @@ export function Editor({
   );
   return (
     <div className="ci-editor">
-      {selected === "all" && <>
-      {field(t("title"), data.title, 80, (value) =>
-        change((d) => {
-          d.title = value;
-        }),
-      )}
-      <label className="ci-field">
-        {t("theme")}
-        <select
-          value={data.theme}
-          onChange={(e) =>
+      {selected === "all" && (
+        <>
+          {field(t("title"), data.title, 80, (value) =>
             change((d) => {
-              d.theme = e.target.value as Content["theme"];
-            })
-          }
-        >
-          {(["fresh", "celebration", "night"] as const).map((x) => (
-            <option key={x} value={x}>
-              {t(x)}
-            </option>
-          ))}
-        </select>
-      </label>
-      {data.kind !== "card" &&
-        field(t("intro"), data.content.intro, 1000, (value) =>
-          change((d) => {
-            if (d.kind !== "card") d.content.intro = value;
-          }),
-        )}
-      </>}
+              d.title = value;
+            }),
+          )}
+          <label className="ci-field">
+            {t("theme")}
+            <select
+              value={data.theme}
+              onChange={(e) =>
+                change((d) => {
+                  d.theme = e.target.value as Content["theme"];
+                })
+              }
+            >
+              {(["fresh", "celebration", "night"] as const).map((x) => (
+                <option key={x} value={x}>
+                  {t(x)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {data.kind !== "card" &&
+            field(t("intro"), data.content.intro, 1000, (value) =>
+              change((d) => {
+                if (d.kind !== "card") d.content.intro = value;
+              }),
+            )}
+        </>
+      )}
       {data.kind === "quiz" && (
         <>
           {data.content.questions.map((q, i) => (
@@ -181,40 +190,44 @@ export function Editor({
               </div>
             </fieldset>
           ))}
-          {selected === "all" && <button
-            disabled={data.content.questions.length >= 8}
-            onClick={() =>
-              change((d) => {
-                if (d.kind === "quiz")
-                  d.content.questions.push({
-                    id: crypto.randomUUID(),
-                    prompt: "",
-                    options: [
-                      { id: "a", text: "" },
-                      { id: "b", text: "" },
-                    ],
-                    answerId: "a",
-                    explanation: "",
-                  });
-              })
-            }
-          >
-            + {t("prompt")}
-          </button>}
-          {selected === "all" && field(t("ending"), data.content.ending, 1000, (value) =>
-            change((d) => {
-              if (d.kind === "quiz") d.content.ending = value;
-            }),
+          {selected === "all" && (
+            <button
+              disabled={data.content.questions.length >= 8}
+              onClick={() =>
+                change((d) => {
+                  if (d.kind === "quiz")
+                    d.content.questions.push({
+                      id: crypto.randomUUID(),
+                      prompt: "",
+                      options: [
+                        { id: "a", text: "" },
+                        { id: "b", text: "" },
+                      ],
+                      answerId: "a",
+                      explanation: "",
+                    });
+                })
+              }
+            >
+              + {t("prompt")}
+            </button>
           )}
+          {selected === "all" &&
+            field(t("ending"), data.content.ending, 1000, (value) =>
+              change((d) => {
+                if (d.kind === "quiz") d.content.ending = value;
+              }),
+            )}
         </>
       )}
       {data.kind === "card" && (
         <>
-          {selected === "all" && field(t("recipient"), data.content.recipient, 80, (value) =>
-            change((d) => {
-              if (d.kind === "card") d.content.recipient = value;
-            }),
-          )}
+          {selected === "all" &&
+            field(t("recipient"), data.content.recipient, 80, (value) =>
+              change((d) => {
+                if (d.kind === "card") d.content.recipient = value;
+              }),
+            )}
           {data.content.sections.map((s, i) => (
             <fieldset key={s.id} hidden={selected !== s.id}>
               <legend>{i + 1}</legend>
@@ -264,52 +277,58 @@ export function Editor({
               </div>
             </fieldset>
           ))}
-          {selected === "all" && <button
-            disabled={data.content.sections.length >= 5}
-            onClick={() =>
+          {selected === "all" && (
+            <button
+              disabled={data.content.sections.length >= 5}
+              onClick={() =>
+                change((d) => {
+                  if (d.kind === "card")
+                    d.content.sections.push({
+                      id: crypto.randomUUID(),
+                      text: "",
+                    });
+                })
+              }
+            >
+              + {t("text")}
+            </button>
+          )}
+          {selected === "all" &&
+            field(t("signature"), data.content.signature, 80, (value) =>
               change((d) => {
-                if (d.kind === "card")
-                  d.content.sections.push({
-                    id: crypto.randomUUID(),
-                    text: "",
-                  });
-              })
-            }
-          >
-            + {t("text")}
-          </button>}
-          {selected === "all" && field(t("signature"), data.content.signature, 80, (value) =>
-            change((d) => {
-              if (d.kind === "card") d.content.signature = value;
-            }),
-          )}
-          {selected === "all" && field(t("ending"), data.content.closing, 1000, (value) =>
-            change((d) => {
-              if (d.kind === "card") d.content.closing = value;
-            }),
-          )}
+                if (d.kind === "card") d.content.signature = value;
+              }),
+            )}
+          {selected === "all" &&
+            field(t("ending"), data.content.closing, 1000, (value) =>
+              change((d) => {
+                if (d.kind === "card") d.content.closing = value;
+              }),
+            )}
         </>
       )}
       {data.kind === "story" && (
         <>
-          {selected === "all" && <label className="ci-field">
-            {t("startNode")}
-            <select
-              value={data.content.startNodeId}
-              onChange={(e) =>
-                change((d) => {
-                  if (d.kind === "story")
-                    d.content.startNodeId = e.target.value;
-                })
-              }
-            >
-              {data.content.nodes.map((n, index) => (
-                <option value={n.id} key={n.id}>
-                  {index + 1} · {n.text.slice(0, 18)}
-                </option>
-              ))}
-            </select>
-          </label>}
+          {selected === "all" && (
+            <label className="ci-field">
+              {t("startNode")}
+              <select
+                value={data.content.startNodeId}
+                onChange={(e) =>
+                  change((d) => {
+                    if (d.kind === "story")
+                      d.content.startNodeId = e.target.value;
+                  })
+                }
+              >
+                {data.content.nodes.map((n, index) => (
+                  <option value={n.id} key={n.id}>
+                    {index + 1} · {n.text.slice(0, 18)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {data.content.nodes.map((n, i) => (
             <fieldset key={n.id} hidden={selected !== n.id}>
               <legend>
@@ -416,22 +435,24 @@ export function Editor({
               </button>
             </fieldset>
           ))}
-          {selected === "all" && <button
-            disabled={data.content.nodes.length >= 12}
-            onClick={() =>
-              change((d) => {
-                if (d.kind === "story")
-                  d.content.nodes.push({
-                    id: `node_${crypto.randomUUID().slice(0, 8)}`,
-                    text: "",
-                    choices: [],
-                    ending: true,
-                  });
-              })
-            }
-          >
-            + {t("nodes")}
-          </button>}
+          {selected === "all" && (
+            <button
+              disabled={data.content.nodes.length >= 12}
+              onClick={() =>
+                change((d) => {
+                  if (d.kind === "story")
+                    d.content.nodes.push({
+                      id: `node_${crypto.randomUUID().slice(0, 8)}`,
+                      text: "",
+                      choices: [],
+                      ending: true,
+                    });
+                })
+              }
+            >
+              + {t("nodes")}
+            </button>
+          )}
         </>
       )}
     </div>

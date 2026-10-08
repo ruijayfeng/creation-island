@@ -5,13 +5,17 @@ Creation Island runs on macOS Apple Silicon. Extract the release folder, keep it
 ## Make your first work
 
 1. Play a quiz, card or branching story in Inspiration, then choose Make my version.
-2. Edit text and themes. Drafts save automatically; the right panel is playable.
+2. Choose settings, a question, a section or a story node in the outline. Edit one part at a time; drafts save automatically. Switch between Edit and Play in the central workspace.
 3. For AI, configure your own provider, model and key in Model settings and test the connection. Provider usage charges may apply.
-4. Describe the recipient and content. Select a question, section or node for a scoped edit. Review the proposed work and actual changes, then adopt or discard.
+4. Open Your companion and describe the recipient and content. The outline selection becomes the AI edit scope; you can also select Whole work. Review before/after content and play the proposal, then adopt or discard.
 5. Save a version to create a recoverable snapshot. Island displays reference saved versions.
-6. Export playable HTML for an offline desktop browser. Back up an editable work package to import and revise later.
+6. Export playable HTML for an offline desktop browser. Choose More actions → Back up editable work to import and revise later.
 
 Incomplete answers or invalid story paths show validation details and retain the previous valid preview. Complete these fields before saving a version or exporting. Authors should confirm factual model output.
+
+If the draft differs from the saved version, explicitly choose Save a new version & export or Export last saved version. Back to editing and Escape do not export. The receipt shows the exported version time.
+
+On narrow windows, switch between Outline, Content & style and Your companion. Story route links navigate directly to their target node.
 
 ## Storage and recovery
 
