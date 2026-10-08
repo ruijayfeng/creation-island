@@ -1,3 +1,17 @@
+# 开放项目实现（2026-10-08）
+
+新默认入口为 `client/projects/IslandApp.tsx`，原生 Harness 保持 Workspace、Session、审批与工具执行的唯一来源。项目插件位于 `src/projects/`；`service.ts` 注册 `/creation/projects/`，`files.ts` 管理便携文件集合与内容寻址快照，`preview.ts` 管理应用拥有的预览进程。旧 `/creation/api` 仅服务兼容作品。
+
+数据位于独立 DSH_HOME/open-projects：原子 state.json、不可变 objects、workspaces、previews、builds、exports。保存不改 Git；恢复创建独立副本。默认排除凭据文件、依赖缓存、Git 与符号链接；64 MiB 单文件、1 GiB 总量、50000 条目上限。清单显式记录排除项。任务基线与结束文件清单由程序读取，Session 保持真实执行历史。
+
+`agent/pre-step` 扩展点防止并发项目执行，原生 composer 的公开 block 接口提前显示忙状态。任务结束后保持锁到文件差异落盘；异常与重启保留中断记录。用户允许命令不等于授予永久完全权限，新会话默认 workspace-write + ask，已有权限不静默重写。
+
+预览由用户确认具体命令后启动，静态 HTTP 或 Node scripts 使用独立本机端口、受限 iframe 与可观察进程；模型网址不能直接成为预览。历史版本从成果快照副本运行。静态导出要求独立副本实际构建成功及 HTTP 检查；服务端项目不冒充静态产物。源码包附清单、排除项和运行说明。Node 预览与用户明确确认的构建脚本是本机进程，不宣称具有模型工具的沙箱隔离；不继承模型凭据环境。
+
+状态：已实现待验收，实际限制与验收见 progress.md。下文为保留的旧版架构。
+
+---
+
 # 技术结构与实现约定
 
 > 2026-10-08 适用范围变更：以下正文描述已有三类结构化作品版本的技术设计，保留用于维护和兼容，不再定义开放式项目创作的目标架构。新目标见 [产品终态](product-spec.md)，需要重新核对的技术条件见 [方向纠正说明](direction-reset.md)。其中无工具生成、Content schema、JSON 作品版本和统一 HTML 播放器不能直接扩展为任意项目执行、文件快照或通用预览。当前仅规划，不修改实现。

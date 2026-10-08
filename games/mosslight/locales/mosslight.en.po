@@ -512,3 +512,15 @@ msgstr "Hold in hand"
 
 msgid "inventory.daisy_description"
 msgstr "Daisy × %d\nGathered item · 1 × 1 space\n\nA flower you grew yourself. Identical flowers stack automatically, up to 99.\n\nIt is kept as a journey keepsake and cannot yet be sold or gifted."
+
+msgid "creation.aqi"
+msgstr "Aqi · Create\nMaking table"
+
+msgid "creation.shiye"
+msgstr "Shiye · Projects & history\nPage house"
+
+msgid "creation.adu"
+msgstr "Adu · Files & export\nDeparture dock"
+
+msgid "creation.inspiration"
+msgstr "Inspiration · Starting points"

@@ -512,3 +512,15 @@ msgstr "拿在手上"
 
 msgid "inventory.daisy_description"
 msgstr "小雏菊 × %d\n采集物 · 1 × 1 格\n\n亲手浇灌的小花。相同花朵会自动叠放，最多可收纳 99 朵。\n\n目前作为旅途成果保存，尚不能出售或赠送。"
+
+msgid "creation.aqi"
+msgstr "阿启 · 开始创作\n造物台"
+
+msgid "creation.shiye"
+msgstr "拾页 · 项目与历史\n留页屋"
+
+msgid "creation.adu"
+msgstr "阿渡 · 文件与导出\n出发码头"
+
+msgid "creation.inspiration"
+msgstr "灵感夹 · 示例与起点"

@@ -107,6 +107,7 @@ var regions_installing := false
 var web_lightweight := false
 var distance_haze: ShaderMaterial
 var creation_showcase: Node3D
+var creation_workshop: Node3D
 
 
 func _ready() -> void:
@@ -138,6 +139,12 @@ func _ready() -> void:
 	add_child(resident_dialogue)
 	sanctuary_computer = SANCTUARY_COMPUTER.new()
 	add_child(sanctuary_computer)
+	creation_workshop = preload("res://scripts/creation_workshop.gd").new()
+	add_child(creation_workshop)
+	sanctuary_computer.visible = false
+	for npc in residents.residents:
+		if npc.get_meta("agent_isles_id") in ["teacher", "file_keeper"]:
+			npc.visible = false
 	_apply_embedded_hud()
 	camera_obstacle_shape.radius = .22
 	_update_view_hint()
@@ -218,9 +225,9 @@ func _on_agent_isles_message(arguments: Array) -> void:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
 	var message := parsed as Dictionary
-	if message.get("source") != "agent-isles-host" or int(message.get("version", 0)) != 1:
+	if message.get("source") != "agent-isles-host" or int(message.get("version", 0)) != 2:
 		return
-	if message.get("type") == "creation:showcase":
+	if message.get("type") in ["creation:showcase", "project:showcase"]:
 		creation_showcase.update_slots(message.get("payload"))
 		return
 	if message.get("type") == "world:locale":
@@ -299,6 +306,9 @@ func _on_agent_isles_message(arguments: Array) -> void:
 	agent_isles_connected = true
 	var payload: Dictionary = message.get("payload", {})
 	_set_world_locale(str(payload.get("locale", "zh")))
+	if payload.has("reducedMotion"):
+		nature_motion = not bool(payload.reducedMotion)
+		camera_motion = nature_motion
 	var panel_open := bool(payload.get("panelOpen", false))
 	if panel_open != agent_isles_panel_open:
 		agent_isles_panel_open = panel_open
@@ -322,7 +332,8 @@ func _on_agent_isles_message(arguments: Array) -> void:
 			elif next_status != "completed":
 				coder_completion_recall_left = -1.0
 			coder_agent_status = next_status
-			sanctuary_computer.set_status(next_status)
+			if creation_workshop != null:
+				creation_workshop.set_status(next_status)
 		residents.set_agent_status(str(resident.get("id", "")), str(resident.get("status", "idle")))
 	var workspace: Variant = payload.get("workspace")
 	if typeof(workspace) != TYPE_DICTIONARY:
@@ -339,6 +350,8 @@ func _set_world_locale(locale: String) -> void:
 	if locale not in ["zh", "en"] or TranslationServer.get_locale() == locale:
 		return
 	TranslationServer.set_locale(locale)
+	if creation_workshop != null:
+		creation_workshop.refresh_locale()
 	if residents != null:
 		residents.refresh_locale()
 	if garden != null:
@@ -669,7 +682,7 @@ func _material(color: Color, roughness: float, glow: bool = false) -> StandardMa
 func _physics_process(delta: float) -> void:
 	if game_paused or agent_isles_panel_open or sanctuary_computer.review_dialogue.opened:
 		return
-	sanctuary_computer.advance(delta)
+	# sanctuary_computer.advance(delta)
 	if sanctuary_computer.review_dialogue.opened:
 		return
 	if sanctuary_computer.active:
@@ -884,6 +897,8 @@ func place_echo() -> bool:
 func _interact() -> void:
 	if game_paused or agent_isles_panel_open or sanctuary_computer.active:
 		return
+	if creation_workshop.interact(player.global_position):
+		return
 	if creation_showcase.interact(player.global_position):
 		return
 	if sanctuary_computer.can_use():
@@ -893,7 +908,7 @@ func _interact() -> void:
 		else:
 			_show_toast(tr("q.open_web"), 4)
 		return
-	if sanctuary_computer.can_grab():
+	if not embedded_mode and not agent_isles_connected and sanctuary_computer.can_grab():
 		sanctuary_computer.grab()
 		return
 	if garden.interact():
@@ -1027,6 +1042,8 @@ func _update_view_hint() -> void:
 
 
 func _process(delta: float) -> void:
+	if creation_workshop != null:
+		creation_workshop.advance(delta, nature_motion)
 	if sanctuary_computer.review_dialogue.opened:
 		return
 	distance_haze.set_shader_parameter("focus_position", player.global_position)

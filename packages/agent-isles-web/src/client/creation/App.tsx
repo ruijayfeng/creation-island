@@ -326,7 +326,7 @@ export function CreationApp(
       frame.current?.contentWindow?.postMessage(
         {
           source: "agent-isles-host",
-          version: 1,
+          version: 2,
           type: "world:init",
           payload: {
             locale: en ? "en" : "zh",
@@ -358,7 +358,7 @@ export function CreationApp(
       frame.current?.contentWindow?.postMessage(
         {
           source: "agent-isles-host",
-          version: 1,
+          version: 2,
           type: "creation:showcase",
           payload: stateRef.current.showcase.map((s) => {
             const w = stateRef.current.works.find((w) => w.id === s?.workId),
@@ -1343,7 +1343,7 @@ export function CreationApp(
                         op: "import",
                         pack: {
                           format: "creation-island",
-                          version: 1,
+                          version: 2,
                           rendererVersion: 1,
                           data: preview,
                         },

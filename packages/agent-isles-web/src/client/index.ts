@@ -9,7 +9,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import { CreationApp } from './creation/App.js'
+import { IslandApp } from './projects/IslandApp.js'
 import type { AgentIslesWorldInjected } from './AgentIslesWorld.js'
 import { AgentIslesBrandMark, AgentIslesBrandName, AgentIslesHeroMark } from './Brand.js'
 import { WORLD_STYLES } from './styles.js'
@@ -27,7 +27,7 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import { en, NS, zh } from './locales.js'
 
-export const inject = ['connection', 'slots', 'sessions', 'workspaces', 'uiWorkspace', 'uiConversation', 'layout', 'locale', 'remote', 'remote.settings', 'remote.credentials', 'remote.llm', 'remote.session', 'remote.directoryPicker']
+export const inject = ['connection', 'slots', 'sessions', 'workspaces', 'uiWorkspace', 'uiConversation', 'layout', 'locale', 'remote', 'remote.settings', 'remote.credentials', 'remote.llm', 'remote.session', 'remote.directoryPicker', 'conversation']
 
 const RESIDENT_SESSION_KEY = 'agent-isles.resident-sessions.v1'
 const RESIDENT_NAMES: Readonly<Record<ResidentId, string>> = {
@@ -84,7 +84,7 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
     return (Object.keys(RESIDENT_NAMES) as ResidentId[]).find(id => sessionForResident(workspaceId, id) === sessionId)
   }
   const selectResident = (residentId: ResidentId, workspaceId: string): Promise<string> => {
-    if (residentId === 'teacher') return Promise.reject(new Error(t('error.teacherSession')))
+    if (residentId !== 'coder') return Promise.reject(new Error(t('error.teacherSession')))
     const key = `${workspaceId}:${residentId}`
     const active = selecting.get(key)
     if (active !== undefined) return active
@@ -125,6 +125,8 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
     return operation
   }
   const sendResidentPrompt = async (residentId: ResidentId, workspaceId: string, prompt: string): Promise<void> => {
+    const status = await fetch('/creation/projects/status', { headers: { 'x-creation-projects': '1' } }).then(r => r.json())
+    if (status.active) throw new Error(t('error.waitTask'))
     const sessionId = await selectResident(residentId, workspaceId)
     const binding = ctx.sessions.binding(sessionId as SessionId)
     if (binding === undefined) throw new Error(t('error.residentDisconnected'))
@@ -216,6 +218,12 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
           },
         },
         residentForSession, selectResident, sendResidentPrompt,
+        blockComposer: (sessionId, reason) => ctx.conversation.blocks.set(sessionId as SessionId, reason ? { reason } : undefined),
+        selectProjectSession: async (projectId, sessionId) => {
+          const workspace = ctx.workspaces.list.getSnapshot().items.find(p => p.workspaceId === projectId)
+          if (!workspace?.sessionIds.includes(sessionId as SessionId)) throw new Error(t('error.workspaceGone'))
+          saved = await stateRequest({ projectId, residentId: 'coder', sessionId })
+        },
         restoreProject: async () => {
           saved = await stateRequest()
           await ctx.sessions.refresh()
@@ -240,5 +248,5 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
         },
         bindWorkspace: async path => (await ctx.workspaces.create({ path })).workspaceId,
       }),
-    }, CreationApp))
+    }, IslandApp))
 }

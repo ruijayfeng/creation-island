@@ -10,6 +10,7 @@ import { createModelTestHandler, type ModelTestServices } from './model-test.js'
 import { createResidentStateHandler } from './resident-state.js'
 import * as tutorial from './tutorial.js'
 import { createBrowserEntry } from './browser-entry.js'
+import * as openProjects from './projects/service.js'
 import * as projectFiles from './project-files.js'
 import { installCreation } from './creation/routes.js'
 
@@ -105,7 +106,8 @@ export async function serveWorld(req: IncomingMessage, res: ServerResponse, worl
 export function apply(ctx: Context & ModelTestServices): void {
   ctx.plugin(tutorial)
   ctx.plugin(projectFiles)
-  for (const file of ['creation-island.svg', 'creation-island.png', 'favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'q-portrait.png', 'file-keeper-portrait.png', 'teacher-portrait.png', 'site.webmanifest']) {
+  ctx.plugin(openProjects)
+  for (const file of ['aqi.svg', 'shiye.svg', 'adu.svg', 'creation-island.svg', 'creation-island.png', 'favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png', 'android-chrome-192x192.png', 'android-chrome-512x512.png', 'q-portrait.png', 'file-keeper-portrait.png', 'teacher-portrait.png', 'site.webmanifest']) {
     ctx.effect(() => ctx.webServer.register({
       kind: 'exact', path: `/agent-isles/brand/${file}`,
       handler: async (req, res) => {

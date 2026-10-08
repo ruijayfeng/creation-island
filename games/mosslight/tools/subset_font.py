@@ -15,6 +15,8 @@ instantiateVariableFont(font, {'wght': 450}, inplace=True)
 text = ''.join(chr(c) for c in range(32, 127))
 for script in (root / 'scripts').glob('*.gd'):
     text += script.read_text(encoding='utf-8')
+for locale in (root / 'locales').glob('*.po'):
+    text += locale.read_text(encoding='utf-8')
 options = subset.Options()
 options.name_IDs = ['*']
 subsetter = subset.Subsetter(options=options)

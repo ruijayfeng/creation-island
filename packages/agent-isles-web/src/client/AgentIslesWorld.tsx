@@ -29,6 +29,8 @@ export interface AgentIslesWorldInjected {
   models: ModelSettingsActions
   residentForSession(workspaceId: string, sessionId: string): ResidentId | undefined
   sessionForResident(workspaceId: string, residentId: ResidentId): string | undefined
+  selectProjectSession?(projectId: string, sessionId: string): Promise<void>
+  blockComposer?(sessionId: string, reason?: string): void
   selectResident(residentId: ResidentId, workspaceId: string): Promise<string>
   sendResidentPrompt(residentId: ResidentId, workspaceId: string, prompt: string): Promise<void>
   getBinding(id: string): SessionBinding | undefined

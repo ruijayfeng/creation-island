@@ -27,6 +27,7 @@ func _ready() -> void:
 		collision.shape = shape
 		body.add_child(collision)
 		var label := Label3D.new()
+		label.font = preload("res://assets/fonts/CreationTitles.ttf")
 		label.text = "%02d" % (i + 1)
 		label.position.y = 0.8
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -52,6 +53,11 @@ func update_slots(value: Variant) -> void:
 			occupied[i] = false
 			labels[i].text = "%02d" % (i + 1)
 			materials[i].albedo_color = Color("97ac99")
+		elif typeof(item) == TYPE_DICTIONARY and item.get("versionId") is String and item.get("title") is String:
+			occupied[i] = true
+			labels[i].text = "%02d · %s" % [i + 1, str(item.title).left(24)]
+			labels[i].font_size = 24
+			materials[i].albedo_color = Color("22675b")
 		elif typeof(item) == TYPE_DICTIONARY and item.get("kind") in ["quiz", "card", "story"] and item.get("theme") in ["fresh", "celebration", "night"]:
 			occupied[i] = true
 			labels[i].text = "%02d · %s" % [i + 1, str(item.kind).to_upper()]

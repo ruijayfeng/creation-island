@@ -1,4 +1,4 @@
-export const WORLD_BRIDGE_VERSION = 1 as const
+export const WORLD_BRIDGE_VERSION = 2 as const
 
 export function worldFrameUrl(hostHref: string): URL {
   const url = new URL('/world/?embed=1', hostHref)
@@ -20,6 +20,7 @@ export interface ResidentView {
 }
 
 export type HostToWorldMessage =
+  | { source: 'agent-isles-host'; version: typeof WORLD_BRIDGE_VERSION; type: 'project:showcase'; payload: ({versionId:string;title:string}|null)[] }
   | { source: 'agent-isles-host'; version: typeof WORLD_BRIDGE_VERSION; type: 'creation:showcase'; payload: ({kind: 'quiz'|'card'|'story'; theme: 'fresh'|'celebration'|'night'}|null)[] }
   | { source: 'agent-isles-host'; version: typeof WORLD_BRIDGE_VERSION; type: 'tutorial:keeper'; payload: { encounterId: string; action: 'arrive' | 'home' | 'cancel'; reducedMotion: boolean } }
   | {
