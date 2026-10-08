@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import type { AgentIslesWorldInjected } from "../AgentIslesWorld.js";
 import { ModelSettings } from "../ModelSettings.js";
 import type { AgentIslesTranslate } from "../locales.js";
-import { isWorldToHostMessage } from "../world-bridge.js";
+import { isWorldToHostMessage, WORLD_BRIDGE_VERSION } from "../world-bridge.js";
 import {
   sample,
   issues,
@@ -326,7 +326,7 @@ export function CreationApp(
       frame.current?.contentWindow?.postMessage(
         {
           source: "agent-isles-host",
-          version: 2,
+          version: WORLD_BRIDGE_VERSION,
           type: "world:init",
           payload: {
             locale: en ? "en" : "zh",
@@ -358,7 +358,7 @@ export function CreationApp(
       frame.current?.contentWindow?.postMessage(
         {
           source: "agent-isles-host",
-          version: 2,
+          version: WORLD_BRIDGE_VERSION,
           type: "creation:showcase",
           payload: stateRef.current.showcase.map((s) => {
             const w = stateRef.current.works.find((w) => w.id === s?.workId),
@@ -1343,7 +1343,7 @@ export function CreationApp(
                         op: "import",
                         pack: {
                           format: "creation-island",
-                          version: 2,
+                          version: WORLD_BRIDGE_VERSION,
                           rendererVersion: 1,
                           data: preview,
                         },

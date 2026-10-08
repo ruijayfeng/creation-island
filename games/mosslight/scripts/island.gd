@@ -225,7 +225,7 @@ func _on_agent_isles_message(arguments: Array) -> void:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
 	var message := parsed as Dictionary
-	if message.get("source") != "agent-isles-host" or int(message.get("version", 0)) != 2:
+	if message.get("source") != "agent-isles-host" or int(message.get("version", 0)) != 3:
 		return
 	if message.get("type") in ["creation:showcase", "project:showcase"]:
 		creation_showcase.update_slots(message.get("payload"))

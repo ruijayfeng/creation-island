@@ -37,7 +37,7 @@ export function materializeAppTree(app) {
     if (item.name === '.bin' || item.name === '@agent-isles' || item.name === '.yarn-state.yml') continue
     copy(`node_modules/${item.name}`)
   }
-  for (const file of ['package.json', 'cordis.patch.yml', 'lib']) {
+  for (const file of ['package.json', 'cordis.patch.yml', 'lib', 'assets/starters']) {
     copy(`packages/agent-isles-web/${file}`, `node_modules/@agent-isles/web-plugin/${file}`)
   }
   copy('packages/agent-isles-web/cordis.patch.yml')

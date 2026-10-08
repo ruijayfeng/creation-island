@@ -218,6 +218,24 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
           },
         },
         residentForSession, selectResident, sendResidentPrompt,
+        sendProjectFeedback: async (projectId,sessionId,text,image,requestId,beforeSend) => {
+          const workspace=ctx.workspaces.list.getSnapshot().items.find(p=>p.workspaceId===projectId)
+          if(!workspace?.sessionIds.includes(sessionId as SessionId))throw new Error('session')
+          const status=await fetch('/creation/projects/status',{headers:{'x-creation-projects':'1'}}).then(r=>r.json())
+          if(status.active||Object.values(ctx.sessions.list.getSnapshot().byId).some(s=>s.running))throw new Error('busy')
+          const binding=ctx.sessions.binding(sessionId as SessionId);if(!binding)throw new Error('session')
+          // Preserve the actual model chosen in this native conversation.
+          // In particular, never replace an image-capable selection with the
+          // global default after the user has confirmed image support.
+          const submission=requestId?undefined:binding.session.beginSubmission({mode:'queue',text,attachments:image?[{type:'image',value:{previewUrl:`data:image/png;base64,${image}`,name:'feedback.png'}}]:[]})
+          const id=requestId??submission!.requestId
+          try {
+            await beforeSend(id)
+            const content:import('@deepseek-ai/dsh-api-session-controller/types').PromptContentPart[]=[{type:'text',text},...image?[{type:'image' as const,mediaType:'image/png' as const,data:image,name:'feedback.png'}]:[]]
+            const result=await binding.session.prompt(content,'queue',undefined,id as import('@deepseek-ai/dsh-api-session-controller/types').SessionRequestId)
+            if(!result.ok)throw new Error(result.error.message)
+          } catch(e){submission?.abandon();throw e}
+        },
         blockComposer: (sessionId, reason) => ctx.conversation.blocks.set(sessionId as SessionId, reason ? { reason } : undefined),
         selectProjectSession: async (projectId, sessionId) => {
           const workspace = ctx.workspaces.list.getSnapshot().items.find(p => p.workspaceId === projectId)

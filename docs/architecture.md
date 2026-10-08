@@ -1,5 +1,13 @@
 # 开放项目实现（2026-10-08）
 
+四项增强已进入当前源码，尚待集中验收。`notes.ts` 校验有界笔记；公开 `system-prompt/assemble` 按实际 Agent/Session 关联加入用户角色上下文，一轮固定版本，未关联项目不注入。`starters.ts` 加载明确随包目录、校验内容清单；复制与恢复共用持久事务日志，失败后用原请求收敛。固定 Harness/vendor 保持不变。
+
+项目 state 升为 schema 2，迁移保留 v1 原文件；成果可有冻结的笔记副本。记录、反馈、沿岸和封面使用独立修订。`media.ts` 管理私有 PNG、运行时校验、640×360 缩略图及七天无引用回收；请求回执只存参数 SHA-256，图片不重复留在回执。原生会话附件继续归 Harness 管理。
+
+`FeedbackPanel.tsx` 负责裁剪、实色遮盖、归一化标注与本次编辑历史；显式保存的处理后底图/反馈可恢复。submission 复用原生请求 ID，对账使用持久 user/message 或 inbox splice 来源；重试冻结文字及图片载荷，不新建会话。模型图片能力未知时默认文字并明确提示，不把文字连接当作识图验证。
+
+浏览器主动 Region Capture 成功裁出容器后才取帧并停止流；失败可上传/粘贴。静态历史预览通过独立无权限的来源挑战确认 iframe 原点，封面需捕获前后核对、宿主校验和用户确认；Node 及未知来源只显示图示。世界桥协议 3 仅传已校验的有界 PNG 缩略图和成果引用。具体状态与限制见 [进度](progress.md)、[四项方案](next-iteration-plan.md)。
+
 新默认入口为 `client/projects/IslandApp.tsx`，原生 Harness 保持 Workspace、Session、审批与工具执行的唯一来源。项目插件位于 `src/projects/`；`service.ts` 注册 `/creation/projects/`，`files.ts` 管理便携文件集合与内容寻址快照，`preview.ts` 管理应用拥有的预览进程。旧 `/creation/api` 仅服务兼容作品。
 
 数据位于独立 DSH_HOME/open-projects：原子 state.json、不可变 objects、workspaces、previews、builds、exports。保存不改 Git；恢复创建独立副本。默认排除凭据文件、依赖缓存、Git 与符号链接；64 MiB 单文件、1 GiB 总量、50000 条目上限。清单显式记录排除项。任务基线与结束文件清单由程序读取，Session 保持真实执行历史。

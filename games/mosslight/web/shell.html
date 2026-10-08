@@ -82,7 +82,7 @@
   </main>
   <script src="$GODOT_URL"></script>
   <script>
-    const AGENT_ISLES_BRIDGE_VERSION = 2;
+    const AGENT_ISLES_BRIDGE_VERSION = 3;
     const embedded = new URLSearchParams(location.search).get('embed') === '1';
     // The host and iframe must use the same loopback origin after a hard refresh.
     // Referrer is authoritative when the world is embedded; fall back to same-origin
@@ -151,6 +151,11 @@
       if (typeof message !== 'object' || message === null
         || message.source !== 'agent-isles-host'
         || message.version !== AGENT_ISLES_BRIDGE_VERSION) return;
+      if (message.type === 'project:showcase') {
+        if (!Array.isArray(message.payload) || message.payload.length !== 6 || message.payload.some(item => item !== null &&
+          (typeof item !== 'object' || typeof item.versionId !== 'string' || item.versionId.length > 160 || typeof item.title !== 'string' || item.title.length > 120 ||
+          (item.coverPng !== undefined && (typeof item.coverPng !== 'string' || item.coverPng.length > 350000 || !/^[A-Za-z0-9+/]*={0,2}$/.test(item.coverPng)))))) return;
+      }
       if (message.type === 'world:show-guide') {
         document.getElementById('guide').showModal();
         return;
@@ -281,7 +286,7 @@
     let guideFromPause = false;
     const pauseHome = document.getElementById('pause-home');
     const pauseSettings = document.getElementById('pause-settings');
-    const pauseAction = (action, extra = {}) => godotMessageHandler?.(JSON.stringify({ source: 'agent-isles-host', version: 2, type: 'world:pause-action', payload: { action, ...extra } }));
+    const pauseAction = (action, extra = {}) => godotMessageHandler?.(JSON.stringify({ source: 'agent-isles-host', version: AGENT_ISLES_BRIDGE_VERSION, type: 'world:pause-action', payload: { action, ...extra } }));
     const backToPause = () => { pauseSettings.hidden = true; pauseHome.hidden = false; document.getElementById('pause-title').textContent = shell('rest'); document.getElementById('pause-resume').focus(); };
     window.showIslandPause = state => {
       if (!state.open) { pause.close(); canvas.focus(); return; }
@@ -352,7 +357,7 @@
     guide.addEventListener('close', () => { if (guideFromPause) { guideFromPause = false; pause.showModal(); backToPause(); } else if (started) canvas.focus(); });
     applyShellLocale(shellLocale);
     window.addEventListener('message', event => {
-      if (event.origin !== parentOrigin || event.source !== window.parent || event.data?.source !== 'agent-isles-host' || event.data.version !== 2 || event.data.type !== 'world:init') return;
+      if (event.origin !== parentOrigin || event.source !== window.parent || event.data?.source !== 'agent-isles-host' || event.data.version !== AGENT_ISLES_BRIDGE_VERSION || event.data.type !== 'world:init') return;
       document.getElementById('pause-task').hidden = !event.data.payload?.residents?.some(item => item.id === 'coder' && ['working', 'thinking'].includes(item.status));
     });
     let started = false;

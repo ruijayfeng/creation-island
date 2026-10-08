@@ -33,6 +33,7 @@ export interface AgentIslesWorldInjected {
   blockComposer?(sessionId: string, reason?: string): void
   selectResident(residentId: ResidentId, workspaceId: string): Promise<string>
   sendResidentPrompt(residentId: ResidentId, workspaceId: string, prompt: string): Promise<void>
+  sendProjectFeedback?(projectId:string,sessionId:string,text:string,image:string|undefined,requestId:string|undefined,beforeSend:(requestId:string)=>Promise<void>):Promise<void>
   getBinding(id: string): SessionBinding | undefined
   focusSession(id: string): void
   toggleSidebar(): void

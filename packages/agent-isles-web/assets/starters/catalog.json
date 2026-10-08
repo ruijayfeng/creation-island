@@ -1,0 +1,210 @@
+[
+  {
+    "id": "club-site",
+    "version": "1.0.0",
+    "title": [
+      "社团活动小站",
+      "Club event site"
+    ],
+    "description": [
+      "筛选活动、打开详情，组织自己的周末。",
+      "Filter events and explore their details."
+    ],
+    "suggestion": [
+      "把活动换成我自己的，调整配色。",
+      "Replace the events with mine and adjust the colors."
+    ],
+    "manifest": {
+      "files": {
+        "app.js": {
+          "hash": "dee6d191a827f903db20c0ca6916d83c24a38a8553f054973aacf23db1ac9edc",
+          "size": 2000,
+          "mode": 420
+        },
+        "index.html": {
+          "hash": "1f77679ffc09cae77c4487668c507e33154d5953265dc47d91f1733942a5cd01",
+          "size": 524,
+          "mode": 420
+        },
+        "LICENSE": {
+          "hash": "417d2a16c6c16630a40d1563b219198a4de3e753040f51030642cc2af1340378",
+          "size": 1119,
+          "mode": 420
+        },
+        "README.md": {
+          "hash": "1d111f8f55aa78591fb8f92861697fa7885d666d450ed88dff9790a18e01c5b2",
+          "size": 564,
+          "mode": 420
+        },
+        "style.css": {
+          "hash": "66b866c80e9ea433f53f9857a0f76ddf0e09f38e40585f673a89e3b2cb0f062f",
+          "size": 1921,
+          "mode": 420
+        },
+        "ui.js": {
+          "hash": "0888601975a608d6046b4089cde6be877bf9e2d3a5f686562d4909f839a63434",
+          "size": 573,
+          "mode": 420
+        }
+      },
+      "excluded": []
+    },
+    "manifestHash": "76ef6e4b987e18da8dbebfe0cf1d6aafcc9fa3ad613a6a905e166ebeff162c83"
+  },
+  {
+    "id": "reading-tool",
+    "version": "1.0.0",
+    "title": [
+      "阅读记录工具",
+      "Reading tracker"
+    ],
+    "description": [
+      "添加、编辑和搜索书籍，记录已读状态。",
+      "Add, edit and search books; track finished reads."
+    ],
+    "suggestion": [
+      "增加评分和标签，保留现有书籍记录功能。",
+      "Add ratings and tags, keeping existing book records."
+    ],
+    "manifest": {
+      "files": {
+        "app.js": {
+          "hash": "9acd4b0510fcd0ec593185b5c5e60f4e95b4f72ce4d76eb789cf1652d40ab5a3",
+          "size": 3337,
+          "mode": 420
+        },
+        "index.html": {
+          "hash": "1f77679ffc09cae77c4487668c507e33154d5953265dc47d91f1733942a5cd01",
+          "size": 524,
+          "mode": 420
+        },
+        "LICENSE": {
+          "hash": "417d2a16c6c16630a40d1563b219198a4de3e753040f51030642cc2af1340378",
+          "size": 1119,
+          "mode": 420
+        },
+        "README.md": {
+          "hash": "1d111f8f55aa78591fb8f92861697fa7885d666d450ed88dff9790a18e01c5b2",
+          "size": 564,
+          "mode": 420
+        },
+        "style.css": {
+          "hash": "66b866c80e9ea433f53f9857a0f76ddf0e09f38e40585f673a89e3b2cb0f062f",
+          "size": 1921,
+          "mode": 420
+        },
+        "ui.js": {
+          "hash": "0888601975a608d6046b4089cde6be877bf9e2d3a5f686562d4909f839a63434",
+          "size": 573,
+          "mode": 420
+        }
+      },
+      "excluded": []
+    },
+    "manifestHash": "d87269d3bd49cafe7986616eef19af1ce98446c9f1e139574eadc1957674559b"
+  },
+  {
+    "id": "breeze-game",
+    "version": "1.0.0",
+    "title": [
+      "海风接物小游戏",
+      "Breeze catcher"
+    ],
+    "description": [
+      "用键盘或触控接星星，计分、结束和重玩。",
+      "Catch stars with keyboard or touch. Score and replay."
+    ],
+    "suggestion": [
+      "增加一种道具，调整速度和得分规则。",
+      "Add a new item and adjust speed and scoring."
+    ],
+    "manifest": {
+      "files": {
+        "app.js": {
+          "hash": "5e88df94c1b3b9b180dd1ae69fb88bf26a9319c1a53ba0bde0b585bdaeffc4b2",
+          "size": 3347,
+          "mode": 420
+        },
+        "index.html": {
+          "hash": "1f77679ffc09cae77c4487668c507e33154d5953265dc47d91f1733942a5cd01",
+          "size": 524,
+          "mode": 420
+        },
+        "LICENSE": {
+          "hash": "417d2a16c6c16630a40d1563b219198a4de3e753040f51030642cc2af1340378",
+          "size": 1119,
+          "mode": 420
+        },
+        "README.md": {
+          "hash": "1d111f8f55aa78591fb8f92861697fa7885d666d450ed88dff9790a18e01c5b2",
+          "size": 564,
+          "mode": 420
+        },
+        "style.css": {
+          "hash": "66b866c80e9ea433f53f9857a0f76ddf0e09f38e40585f673a89e3b2cb0f062f",
+          "size": 1921,
+          "mode": 420
+        },
+        "ui.js": {
+          "hash": "0888601975a608d6046b4089cde6be877bf9e2d3a5f686562d4909f839a63434",
+          "size": 573,
+          "mode": 420
+        }
+      },
+      "excluded": []
+    },
+    "manifestHash": "ca9adc4c331ead238e6e6b8197cc51c470d05033f6769e92152551541ef62495"
+  },
+  {
+    "id": "exhibit-guide",
+    "version": "1.0.0",
+    "title": [
+      "展览导览原型",
+      "Exhibition guide"
+    ],
+    "description": [
+      "探索三个地点，查看详情和收藏。",
+      "Explore three places, details and favorites."
+    ],
+    "suggestion": [
+      "换成我自己的展览，增加一处地点。",
+      "Use my exhibition content and add another place."
+    ],
+    "manifest": {
+      "files": {
+        "app.js": {
+          "hash": "6b9c0192ed479cd5f409a89f9215bad4058bd6b35d266888b832fc9f7e1c3654",
+          "size": 2356,
+          "mode": 420
+        },
+        "index.html": {
+          "hash": "1f77679ffc09cae77c4487668c507e33154d5953265dc47d91f1733942a5cd01",
+          "size": 524,
+          "mode": 420
+        },
+        "LICENSE": {
+          "hash": "417d2a16c6c16630a40d1563b219198a4de3e753040f51030642cc2af1340378",
+          "size": 1119,
+          "mode": 420
+        },
+        "README.md": {
+          "hash": "1d111f8f55aa78591fb8f92861697fa7885d666d450ed88dff9790a18e01c5b2",
+          "size": 564,
+          "mode": 420
+        },
+        "style.css": {
+          "hash": "66b866c80e9ea433f53f9857a0f76ddf0e09f38e40585f673a89e3b2cb0f062f",
+          "size": 1921,
+          "mode": 420
+        },
+        "ui.js": {
+          "hash": "0888601975a608d6046b4089cde6be877bf9e2d3a5f686562d4909f839a63434",
+          "size": 573,
+          "mode": 420
+        }
+      },
+      "excluded": []
+    },
+    "manifestHash": "0c63aa3fb7c63dcc029e7d885f45a8f68b73c8b97505a39f15f270e237fd3ecc"
+  }
+]

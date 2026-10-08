@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm'
 import { worldFrameUrl, isWorldToHostMessage } from '../lib/types/client/world-bridge.js'
 
 test('tutorial presentation receipts require a bounded encounter identity and known status', () => {
-  const message = { source: 'agent-isles-world', version: 2, type: 'tutorial:keeper', payload: { encounterId: 'course-1', status: 'arrived' } }
+  const message = { source: 'agent-isles-world', version: 3, type: 'tutorial:keeper', payload: { encounterId: 'course-1', status: 'arrived' } }
   assert.equal(isWorldToHostMessage(message), true)
   assert.equal(isWorldToHostMessage({ ...message, payload: { ...message.payload, status: 'complete' } }), false)
   assert.equal(isWorldToHostMessage({ ...message, payload: { ...message.payload, encounterId: 'x'.repeat(161) } }), false)
@@ -22,24 +22,24 @@ test('remote deployment retains its own origin and never copies credentials', ()
 })
 
 test('resident messages require the known protocol and resident', () => {
-  const message = { source: 'agent-isles-world', version: 2, type: 'resident:selected', payload: { residentId: 'coordinator' } }
+  const message = { source: 'agent-isles-world', version: 3, type: 'resident:selected', payload: { residentId: 'coordinator' } }
   assert.equal(isWorldToHostMessage(message), true)
-  assert.equal(isWorldToHostMessage({ ...message, version: 3 }), false)
+  assert.equal(isWorldToHostMessage({ ...message, version: 2 }), false)
   assert.equal(isWorldToHostMessage({ ...message, payload: { residentId: 'unknown' } }), false)
 })
 
 test('region status requires a known stage and bounded text', () => {
-  const message = { source: 'agent-isles-world', version: 2, type: 'world:regions', payload: { stage: 'failed', detail: 'HTTP 503' } }
+  const message = { source: 'agent-isles-world', version: 3, type: 'world:regions', payload: { stage: 'failed', detail: 'HTTP 503' } }
   assert.equal(isWorldToHostMessage(message), true)
   assert.equal(isWorldToHostMessage({ ...message, payload: { stage: 'unknown', detail: '' } }), false)
   assert.equal(isWorldToHostMessage({ ...message, payload: { stage: 'ready', detail: 'x'.repeat(241) } }), false)
 })
 
 test('playable is a separate authenticated bridge event', () => {
-  const message = { source: 'agent-isles-world', version: 2, type: 'world:playable' }
+  const message = { source: 'agent-isles-world', version: 3, type: 'world:playable' }
   assert.equal(isWorldToHostMessage(message), true)
   assert.equal(isWorldToHostMessage({ ...message, source: 'other' }), false)
-  assert.equal(isWorldToHostMessage({ ...message, version: 3 }), false)
+  assert.equal(isWorldToHostMessage({ ...message, version: 2 }), false)
 })
 
 test('world announces playable only after startup resolves and the loading cover is hidden', async () => {
@@ -81,7 +81,7 @@ test('world accepts only the paired parent and preserves both bridge directions'
   const document = { body: { dataset: {} }, getElementById: () => element, querySelector: () => element, querySelectorAll: () => [] }
   runInNewContext(source, { URL, URLSearchParams, window, document, location: { origin: 'http://localhost:3081', search: '?embed=1' } })
   window.agentIslesWorldBridge.attachGodot(message => received.push(JSON.parse(message)))
-  const data = { source: 'agent-isles-host', version: 2, type: 'world:init', payload: { locale: 'en', workspace: { title: 'Test' }, panelOpen: true } }
+  const data = { source: 'agent-isles-host', version: 3, type: 'world:init', payload: { locale: 'en', workspace: { title: 'Test' }, panelOpen: true } }
   listener({ origin: 'https://untrusted.example', source: parent, data })
   listener({ origin: 'http://localhost:3081', source: {}, data })
   assert.equal(received.length, 0)

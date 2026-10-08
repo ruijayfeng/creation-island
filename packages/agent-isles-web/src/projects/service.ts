@@ -5,31 +5,45 @@ import { stopOwnedJobs } from './jobs.js'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
-import { mkdir, readFile, readdir, stat, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, stat, realpath, rm, writeFile, rename, copyFile } from 'node:fs/promises'
 import { resolve, basename, extname, dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { atomic, scan, same, materialize, diff, textObject, safePath, type Manifest } from './files.js'
 import { Previews, recipes } from './preview.js'
+import { digest } from './files.js'
+import { emptyNotes, validateNotes, notesContext, type ProjectNotes } from './notes.js'
+import { starterList, starterSource } from './starters.js'
+import { ProjectMedia } from './media.js'
+import { validateAnnotations, type GrowthMetadata } from './metadata.js'
+import type {} from '@deepseek-ai/dsh-attachment'
 const exec = promisify(execFile)
-export interface Achievement { id: string; projectId: string; title: string; note: string; createdAt: number; manifest: Manifest }
-export interface Run { id: string; projectId: string; sessionId: string; turn: number; state: 'running'|'finished'|'interrupted'|'failed'; startedAt: number; before?: Manifest; after?: Manifest; error?: string }
-interface ProjectRecord { revision: number; achievements: Achievement[]; slots: (string|null)[]; runs: Run[] }
+export interface Achievement { id: string; projectId: string; title: string; note: string; createdAt: number; manifest: Manifest; notes?:ProjectNotes }
+export interface Run { id: string; projectId: string; sessionId: string; turn: number; state: 'running'|'finished'|'interrupted'|'failed'; startedAt: number; before?: Manifest; after?: Manifest; error?: string; notes?:ProjectNotes }
+interface ProjectRecord extends GrowthMetadata { revision: number; achievements: Achievement[]; slots: (string|null)[]; runs: Run[] }
 interface Build { projectId:string; versionId:string; directory:string; manifest:Manifest; log:string; createdAt:number }
-interface State { builds?:Record<string,Build>; version:1; projects: Record<string,ProjectRecord>; receipts: Record<string,{ fingerprint:string; result:unknown }> }
+interface State { builds?:Record<string,Build>; version:1|2; projects: Record<string,ProjectRecord>; receipts: Record<string,{ fingerprint:string; result:unknown }> }
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[\w-]{1,160}$/.test(value) && !['__proto__','constructor','prototype'].includes(value)
-export const inject = ['workspaceRegistry','webServer','sessions','jobs']
+export const inject = ['workspaceRegistry','webServer','sessions','jobs','attachments']
 export function apply(ctx: Context) {
   ctx.inject(['systemPrompt'], c => c.effect(() => c.systemPrompt.section({ name:'creation-island:partner', order:50, text:'You are 阿启 (Aqi), the making partner in Creation Island. Work on real files in the current project using the available tools and actual permissions. Read existing files before editing. Do not claim a task result is verified without running checks. Never claim a URL is a verified preview: the host checks previews separately. User-confirmed saved achievements are separate from finishing a turn. Favor simple runnable Web projects for new ideas, retain existing project structure when editing. Do not run persistent preview servers yourself: provide a package.json dev/start script honoring PORT and HOST, or static index.html, for the host to run. Do not install dependencies or access outside the project by bypassing runtime approval. Shiye and Adu are local management interfaces, not additional agents. Respond in the user’s language.' }), 'creation-island persona'))
   const home = resolve(process.env.DSH_HOME ?? '.creation-island-home', 'open-projects')
   const objects = resolve(home,'objects'), store = resolve(home,'state.json')
   const previews = new Previews()
-  let state: State = { version:1, projects:{}, receipts:{} }
+  let state: State = { version:2, projects:{}, receipts:{} }
   const initialized = (async () => {
-    try { state = JSON.parse(await readFile(store,'utf8')); if (state.version !== 1 || !state.projects || !state.receipts) throw new Error('corrupt') }
+    try { state = JSON.parse(await readFile(store,'utf8')); if (![1,2].includes(state.version) || !state.projects || !state.receipts) throw new Error('corrupt') }
     catch (e) { if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e }
+    if(state.version===1) {
+      await copyFile(store,`${store}.v1-backup`,2).catch(e=>{if(e.code!=='EEXIST')throw e})
+      for(const r of Object.values(state.projects)) Object.assign(r,{notes:emptyNotes(),showcaseRevision:0,captures:{},feedback:{},covers:{}})
+      state.version=2;await atomic(store,state)
+    }
     let interrupted = false
+    // Older receipts stored JSON arguments; hashes avoid retaining image bytes
+    // outside the private, reference-counted media objects.
+    for(const receipt of Object.values(state.receipts))if(receipt.fingerprint.startsWith('{')){receipt.fingerprint=digest(receipt.fingerprint);interrupted=true}
     for (const p of Object.values(state.projects)) for (const run of p.runs) if (run.state === 'running') { run.state='interrupted'; interrupted=true }
     if (interrupted) await atomic(store,state)
   })()
@@ -39,9 +53,50 @@ export function apply(ctx: Context) {
     if (!validId(id)) throw new Error('project')
     const workspace = ctx.workspaceRegistry.get(WorkspaceId(id)); if (!workspace) throw new Error('project'); return workspace
   }
-  const record = (id:string) => state.projects[id] ??= { revision:0, achievements:[], slots:Array(6).fill(null), runs:[] }
+  const record = (id:string) => state.projects[id] ??= { revision:0, achievements:[], slots:Array(6).fill(null), runs:[], notes:emptyNotes(),showcaseRevision:0,captures:{},feedback:{},covers:{} }
   let owner: { sessionId: string; projectId: string; run: Run; agent:Agent; finishing?:boolean } | undefined
   let maintenance = false
+  // The runtime assembles context BEFORE agent/pre-step. Contribute through its
+  // public assembly waterfall, scoped by the actual agent/session association.
+  const contexts=new WeakMap<Agent,{turn:number;projectId:string;value:string;notes:ProjectNotes}>()
+  ctx.on('system-prompt/assemble',async (assembly,context,next)=>{
+    await initialized
+    const result=await next(),agent=context.agent
+    if(!agent)return result
+    const workspace=ctx.workspaceRegistry.list().find(p=>p.sessionIds.includes(agent.session.id))
+    if(!workspace)return result
+    const started=[...agent.session.snapshotEvents()].reverse().find(e=>e.type==='turn/start')
+    const turn=started?.type==='turn/start'?started.data.turn:0
+    let frozen=contexts.get(agent)
+    if(!frozen||frozen.turn!==turn||frozen.projectId!==workspace.id){
+      const notes=structuredClone(record(workspace.id).notes)
+      frozen={turn,projectId:workspace.id,value:notesContext(workspace.id,notes),notes}
+      contexts.set(agent,frozen)
+    }
+    return {...result,variables:{...result.variables,ci_project_notes:frozen.value},contexts:[...result.contexts,...(frozen.value?[{name:'creation-island:notes',text:'{{ci_project_notes}}'}]:[])]}
+  })
+  const media=new ProjectMedia(resolve(home,'media'),ctx.attachments)
+  async function copyProject(cmd:Record<string,any>,manifest:Manifest,title:string,extra?:{starter?:GrowthMetadata['starter'];notes?:ProjectNotes}) {
+    const journalFile=resolve(home,'transactions',`${cmd.requestId}.json`)
+    let journal:{target:string;ready:boolean;id?:string;fingerprint:string;manifest:Manifest;title:string;extra?:typeof extra}
+    const fingerprint=digest(JSON.stringify({...cmd,requestId:undefined}))
+    try{journal=JSON.parse(await readFile(journalFile,'utf8'));if(journal.fingerprint.startsWith('{'))journal.fingerprint=digest(journal.fingerprint);if(journal.fingerprint!==fingerprint)throw new Error('conflict')}
+    catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e; journal={target:resolve(home,'workspaces',`copy-${cmd.requestId}`),ready:false,fingerprint,manifest,title,extra};await atomic(journalFile,journal)}
+    manifest=journal.manifest;title=journal.title;extra=journal.extra
+    if(!journal.ready){
+      const stage=`${journal.target}.preparing`;await rm(stage,{recursive:true,force:true});await mkdir(stage,{recursive:true});await materialize(manifest,objects,stage)
+      // A previous rename may have completed before its journal update.
+      try{await rename(stage,journal.target)}catch(e){if(!['EEXIST','ENOTEMPTY'].includes((e as NodeJS.ErrnoException).code??''))throw e;if(!same(manifest,await scan(journal.target)))throw new Error('changed');await rm(stage,{recursive:true,force:true})}
+      journal.ready=true;await atomic(journalFile,journal)
+    }
+    const existing=ctx.workspaceRegistry.list().find(p=>p.path===journal.target)
+    const workspace=existing??await ctx.workspaceRegistry.create(journal.target,title)
+    journal.id=workspace.id;await atomic(journalFile,journal)
+    const r=record(workspace.id)
+    if(extra?.starter)r.starter=extra.starter
+    if(extra?.notes&&r.notes.revision===0)r.notes={...structuredClone(extra.notes),revision:1}
+    return {id:workspace.id,path:workspace.path}
+  }
   const finish = (sessionId:string) => {
     if (!owner || owner.sessionId !== sessionId || owner.finishing) return
     const current=owner
@@ -67,7 +122,7 @@ export function apply(ctx: Context) {
     if (!workspace) return next()
     if (maintenance || owner && (owner.sessionId!==sessionId || owner.finishing || owner.run.state!=='running')) throw new Error('Creation Island: another project is working. Please retry when it finishes. / 另一个项目正在工作，请稍后重试。')
     if (!owner) {
-      const run: Run = { id:randomUUID(),projectId:workspace.id,sessionId,turn,state:'running',startedAt:Date.now() }
+      const run: Run = { id:randomUUID(),projectId:workspace.id,sessionId,turn,state:'running',startedAt:Date.now(),notes:contexts.get(agent)?.notes }
       owner={ sessionId,projectId:workspace.id,run,agent }
       try { await serial(async()=> { run.before=await scan(workspace.path,objects); record(workspace.id).runs.push(run); await atomic(store,state) }) }
       catch(e) { owner=undefined; throw e }
@@ -93,17 +148,74 @@ export function apply(ctx: Context) {
   }
   async function command(cmd: Record<string,any>) {
     if(!validId(cmd.requestId)) throw new Error('request')
-    const fingerprint=JSON.stringify({...cmd,requestId:undefined})
+    const fingerprint=digest(JSON.stringify({...cmd,requestId:undefined}))
     const previous=state.receipts[cmd.requestId]
     if(previous) {
       if(previous.fingerprint!==fingerprint) throw new Error('conflict')
-      if(cmd.op==='preview') {const saved=previous.result as import('./preview.js').Preview;return previews.records.get(saved.id)??{...saved,state:'stopped',url:undefined}}
+      if(['preview','starter-preview'].includes(cmd.op)) {const saved=previous.result as import('./preview.js').Preview;return previews.records.get(saved.id)??{...saved,state:'stopped',url:undefined}}
       return previous.result
     }
     const id=String(cmd.projectId ?? '')
-    if(cmd.op!=='create') project(id)
+    if(!['create','starter-copy','starter-preview','starter-stop'].includes(cmd.op)) project(id)
     let result:unknown
     switch(cmd.op) {
+      case 'starter-copy': {
+        checkIdle();const {item,manifest}=await starterSource(cmd.starterId,objects)
+        const title=String(cmd.title??item.title[0]).trim();if(!title||title.length>80)throw new Error('title')
+        result=await copyProject(cmd,manifest,title,{starter:{id:item.id,version:item.version,manifestHash:item.manifestHash}});break
+      }
+      case 'starter-preview': {
+        const {item,manifest}=await starterSource(cmd.starterId,objects)
+        const root=resolve(home,'starter-previews',cmd.requestId);await rm(root,{recursive:true,force:true});await mkdir(root,{recursive:true});await materialize(manifest,objects,root)
+        result=await previews.start(`starter-${item.id}`,root,{kind:'static',directory:'',command:'HTTP .'});break
+      }
+      case 'starter-stop': {
+        const p=previews.records.get(cmd.previewId);if(!p?.projectId.startsWith('starter-'))throw new Error('preview');await previews.stop(p.id);result={ok:true};break
+      }
+      case 'notes-save': {
+        const r=record(id);if(cmd.revision!==r.notes.revision)throw new Error('conflict')
+        r.notes=validateNotes(cmd.notes,r.notes.revision+1);result=r.notes;break
+      }
+      case 'showcase-set': {
+        const r=record(id)
+        if(cmd.revision!==r.showcaseRevision)throw new Error('conflict')
+        if(!Array.isArray(cmd.slots)||cmd.slots.length!==6||new Set(cmd.slots.filter((v:unknown)=>v!==null)).size!==cmd.slots.filter((v:unknown)=>v!==null).length)throw new Error('conflict')
+        for(const v of cmd.slots)if(v!==null)achievement(id,v)
+        r.slots=[...cmd.slots];r.showcaseRevision++;r.revision++;result={ok:true};break
+      }
+      case 'media-save': {
+        const parent=cmd.derivedFrom?record(id).captures[cmd.derivedFrom]:undefined
+        if(cmd.derivedFrom&&!parent)throw new Error('invalid-media')
+        if(parent){if(parent.sessionId&&parent.sessionId!==cmd.sessionId)throw new Error('session');Object.assign(cmd,{source:parent.source,previewId:parent.previewId,versionId:parent.versionId,capturedAt:parent.capturedAt})}
+        if(cmd.sessionId&&!project(id).sessionIds.includes(cmd.sessionId))throw new Error('session')
+        if(cmd.versionId)achievement(id,cmd.versionId)
+        if(cmd.source==='preview'&&!parent){
+          const p=previews.records.get(cmd.previewId)
+          if(!p||p.projectId!==id||p.state!=='ready'||p.versionId!==cmd.versionId)throw new Error('source-changed')
+        }
+        const capture=await media.save(id,cmd,parent)
+        record(id).captures[capture.id]=capture;result=capture;break
+      }
+      case 'feedback-save': {
+        const r=record(id),d=cmd.draft
+        if(!d||!project(id).sessionIds.includes(d.sessionId)||!r.captures[d.captureId]||(r.captures[d.captureId]!.sessionId&&r.captures[d.captureId]!.sessionId!==d.sessionId))throw new Error('session')
+        const old=r.feedback[d.sessionId]
+        if(cmd.revision!==(old?.revision??0))throw new Error('conflict')
+        if(typeof d.text!=='string'||d.text.length>6000||String(d.route??'').length>300||(d.requestId&&!validId(d.requestId)))throw new Error('feedback-invalid')
+        if(d.delivery&&(typeof d.delivery.text!=='string'||d.delivery.text.length>24000||(d.delivery.imageCaptureId&&!r.captures[d.delivery.imageCaptureId])))throw new Error('feedback-invalid')
+        const annotations=validateAnnotations(d.annotations)
+        r.feedback[d.sessionId]={revision:(old?.revision??0)+1,sessionId:d.sessionId,captureId:d.captureId,annotations,text:d.text,route:String(d.route??''),requestId:d.requestId,submission:d.requestId?'pending':undefined,delivery:d.delivery?{text:d.delivery.text,imageCaptureId:d.delivery.imageCaptureId}:undefined}
+        result=r.feedback[d.sessionId];break
+      }
+      case 'feedback-delete': {
+        const r=record(id);if(cmd.revision!==(r.feedback[cmd.sessionId]?.revision??0))throw new Error('conflict');delete r.feedback[cmd.sessionId];result={ok:true};break
+      }
+      case 'cover-set': {
+        const r=record(id),a=achievement(id,cmd.versionId),capture=r.captures[cmd.captureId],p=capture&&previews.records.get(capture.previewId??'')
+        if(cmd.revision!==(r.covers[a.id]?.revision??0))throw new Error('conflict')
+        if(!capture||capture.source!=='preview'||capture.versionId!==a.id||!capture.thumbnailHash||!p||p.kind!=='static'||p.state!=='ready'||p.versionId!==a.id||!cmd.confirmed)throw new Error('source-changed')
+        r.covers[a.id]={captureId:capture.id,manifestHash:digest(JSON.stringify(a.manifest)),revision:(r.covers[a.id]?.revision??0)+1};result=r.covers[a.id];break
+      }
       case 'create': {
         if(typeof cmd.title!=='string' || !cmd.title.trim() || cmd.title.length>80) throw new Error('title')
         const parent=cmd.parent ? await realpath(cmd.parent) : resolve(home,'workspaces')
@@ -121,7 +233,7 @@ export function apply(ctx: Context) {
           const manifest=await scan(project(id).path,objects)
           if(!Object.keys(manifest.files).length) throw new Error('empty')
           if(!same(manifest,await scan(project(id).path))) throw new Error('changed')
-          const a:Achievement={id:randomUUID(),projectId:id,title:cmd.title.trim(),note:String(cmd.note??''),createdAt:Date.now(),manifest}
+          const a:Achievement={id:randomUUID(),projectId:id,title:cmd.title.trim(),note:String(cmd.note??''),createdAt:Date.now(),manifest,notes:structuredClone(record(id).notes)}
           record(id).achievements.push(a); record(id).revision++; result=a
         } finally { maintenance=false }
         break
@@ -129,12 +241,11 @@ export function apply(ctx: Context) {
       case 'showcase': {
         if(cmd.revision!==record(id).revision || !Number.isInteger(cmd.slot) || cmd.slot<0 || cmd.slot>5) throw new Error('conflict')
         if(cmd.versionId!==null) achievement(id,cmd.versionId)
-        record(id).slots[cmd.slot]=cmd.versionId; record(id).revision++; result={ok:true}; break
+        if(cmd.versionId!==null)record(id).slots=record(id).slots.map(v=>v===cmd.versionId?null:v);record(id).slots[cmd.slot]=cmd.versionId; record(id).revision++;record(id).showcaseRevision++; result={ok:true}; break
       }
       case 'restore': {
         checkIdle(); const a=achievement(id,cmd.versionId)
-        const target=resolve(home,'workspaces',`restored-${cmd.requestId}`); await mkdir(target,{recursive:true}); await materialize(a.manifest,objects,target)
-        const p=await ctx.workspaceRegistry.create(target,`${project(id).title} — ${a.title}`); result={id:p.id,path:p.path}; break
+        result=await copyProject(cmd,a.manifest,`${project(id).title} — ${a.title}`,{notes:a.notes});break
       }
       case 'preview': {
         checkIdle()
@@ -182,7 +293,7 @@ export function apply(ctx: Context) {
           if(text && /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:sk-[A-Za-z0-9_-]{24,}|gh[pousr]_[A-Za-z0-9]{30,}|AKIA[A-Z0-9]{16})/.test(text)) throw new Error('sensitive-export')
         }
         const instructions = `# ${a.title}\n\nSaved: ${new Date(a.createdAt).toISOString()}\nVersion: ${a.id}\n\n${a.note}\n\n${built?'Verified static build. Serve the project directory using an HTTP static server; double-clicking files may not work. / 已验证静态构建：使用 HTTP 静态服务部署 project 目录，不能保证双击运行。':'Source snapshot. Dependencies, credentials and Git history are not included.'}\n源码快照，不包含依赖、凭据和 Git 历史。\n\n${(await recipes(source)).map(r=>r.command).join('\n') || 'No verified startup recipe. / 未检测到已验证的启动方式。'}\n\nFor Node projects install the lockfile-matched dependencies first; inspect package.json scripts and configure required services.\nNode 项目需按锁文件安装依赖，核对脚本并配置所需服务。\n\nExcluded / 排除项:\n${exported.excluded.join('\n')}\n`
-        await writeFile(resolve(target,'RUNNING.md'),instructions)
+        await writeFile(resolve(target,'RUNNING.md'),instructions+(cmd.includeNotes&&a.notes?'\n## Confirmed project notes / 已确认项目记录\n\n'+JSON.stringify(a.notes,null,2):''))
         await writeFile(resolve(target,'manifest.json'),JSON.stringify(exported,null,2))
         let name=cmd.kind==='static'?'static.tar.gz':'source.tar.gz'
         if(cmd.kind==='html') {
@@ -197,6 +308,7 @@ export function apply(ctx: Context) {
       }
       default: throw new Error('operation')
     }
+    await media.collect(Object.values(state.projects))
     state.receipts[cmd.requestId]={fingerprint,result}
     await atomic(store,state)
     return result
@@ -208,7 +320,7 @@ export function apply(ctx: Context) {
       await initialized
       const url=new URL(req.url??'/', 'http://localhost'), id=url.searchParams.get('project')??''
       if(req.method==='POST') {
-        let body='';for await(const chunk of req) {body+=chunk;if(body.length>1024*1024) throw new Error('size')}
+        let body='';for await(const chunk of req) {body+=chunk;if(body.length>13*1024*1024) throw new Error('size')}
         const cmd=JSON.parse(body)
         const result=await serial(async()=> {
           const before=structuredClone(state)
@@ -222,7 +334,17 @@ export function apply(ctx: Context) {
         if(!validId(exportId) || !['source.tar.gz','static.tar.gz','index.html'].includes(name) || !state.receipts[exportId]) throw new Error('export')
         const bytes=await readFile(resolve(home,'exports',exportId,name));res.writeHead(200,{'content-type':'application/octet-stream','content-disposition':`attachment; filename="${name}"`});res.end(bytes);return
       }
+      if(url.pathname.endsWith('/starters')){reply(200,await starterList());return}
+      if(url.pathname.endsWith('/image-limits')){reply(200,ctx.attachments.imageLimits);return}
       project(id)
+      if(url.pathname.endsWith('/media')){const bytes=await media.read(record(id).captures,url.searchParams.get('hash')??'');res.writeHead(200,{'content-type':'image/png','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(bytes);return}
+      if(url.pathname.endsWith('/submission')){
+        const sessionId=url.searchParams.get('session')??'',requestId=url.searchParams.get('request')??''
+        if(!project(id).sessionIds.includes(sessionId as import('@deepseek-ai/dsh-session').SessionId))throw new Error('session')
+        const events=ctx.sessions.get(sessionId as import('@deepseek-ai/dsh-session').SessionId)?.snapshotEvents()
+        const accepted=events?.some(e=>e.type==='user/message' && (e.data.source as {rpcId?:string}).rpcId===requestId || e.type==='agent/inbox/spliced' && e.data.inserted.some(m=>(m.source as {rpcId?:string}).rpcId===requestId))
+        reply(200,{accepted:!!accepted,known:!!events});return
+      }
       if(url.pathname.endsWith('/files')) {
         const path=url.searchParams.get('path')??'', file=await safePath(project(id).path,path)
         const info=await stat(file)

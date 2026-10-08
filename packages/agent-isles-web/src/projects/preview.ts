@@ -5,7 +5,7 @@ import { resolve, extname, dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { safePath } from './files.js'
 
-export interface Preview { id: string; projectId: string; versionId?: string; state: 'starting'|'ready'|'failed'|'stopped'; url?: string; command: string; log: string; startedAt: number }
+export interface Preview { id: string; projectId: string; versionId?: string; kind?:'static'|'node'; state: 'starting'|'ready'|'failed'|'stopped'; url?: string; command: string; log: string; startedAt: number }
 export interface Recipe { kind: 'static'|'node'; command: string; script?: string; directory: string }
 const mime: Record<string,string> = { '.html':'text/html', '.js':'text/javascript', '.mjs':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.webp':'image/webp', '.wasm':'application/wasm', '.ico':'image/x-icon' }
 export async function recipes(root: string): Promise<Recipe[]> {
@@ -37,7 +37,7 @@ export class Previews {
   async close() { await Promise.all([...this.owned.keys()].map(id => this.stop(id))) }
   async start(projectId: string, root: string, recipe: Recipe, versionId?: string) {
     for (const old of this.records.values()) if (old.projectId === projectId) await this.stop(old.id)
-    const record: Preview = { id: randomUUID(), projectId, versionId, state:'starting', command:recipe.command, log:'', startedAt: Date.now() }
+    const record: Preview = { id: randomUUID(), projectId, versionId, kind:recipe.kind, state:'starting', command:recipe.command, log:'', startedAt: Date.now() }
     this.records.set(record.id, record)
     try {
     const portServer = createServer()
@@ -53,7 +53,13 @@ export class Previews {
           const pathname = decodeURIComponent(new URL(req.url ?? '/', url).pathname)
           let file = await safePath(base, pathname.replace(/^\//,'') || 'index.html')
           if ((await stat(file)).isDirectory()) file = await safePath(base, `${pathname.replace(/^\//,'')}/index.html`)
-          const bytes = await readFile(file)
+          let bytes = await readFile(file)
+          if(extname(file)==='.html'){
+            // A narrowly scoped origin proof for user-confirmed static covers.
+            // It conveys no host credentials, files, commands or world access.
+            const probe=`<script>addEventListener('message',e=>{if(e.source===parent&&/^http:\\/\\/127\\.0\\.0\\.1:\\d+$/.test(e.origin)&&e.data?.source==='ci-preview-probe'&&typeof e.data.challenge==='string'&&e.data.challenge.length<100)parent.postMessage({source:'ci-preview-proof',previewId:${JSON.stringify(record.id)},challenge:e.data.challenge},e.origin)});</script>`
+            const html=bytes.toString('utf8');bytes=Buffer.from(/<head\b[^>]*>/i.test(html)?html.replace(/<head\b[^>]*>/i,m=>m+probe):probe+html)
+          }
           res.writeHead(200, { 'content-type': mime[extname(file)] ?? 'application/octet-stream', 'cache-control':'no-store', 'x-content-type-options':'nosniff' }); res.end(req.method === 'HEAD' ? undefined : bytes)
         } catch { res.writeHead(404); res.end('Not found') }
       })

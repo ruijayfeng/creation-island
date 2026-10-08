@@ -5,6 +5,8 @@ var bodies: Array[StaticBody3D] = []
 var labels: Array[Label3D] = []
 var materials: Array[StandardMaterial3D] = []
 var occupied: Array[bool] = []
+var pictures: Array[MeshInstance3D] = []
+var picture_hashes: Array[String] = []
 
 func _ready() -> void:
 	for i in range(6):
@@ -31,7 +33,20 @@ func _ready() -> void:
 		label.render_priority = 110
 		label.font = preload("res://assets/fonts/CreationTitles.ttf")
 		label.text = "%02d" % (i + 1)
-		label.position.y = 0.8
+		label.position.y = 1.5
+		var picture := MeshInstance3D.new()
+		var quad := QuadMesh.new()
+		quad.size = Vector2(1.45, 0.82)
+		picture.mesh = quad
+		picture.position.y = 0.85
+		var picture_material := StandardMaterial3D.new()
+		picture_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		picture_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		picture.material_override = picture_material
+		picture.visible = false
+		body.add_child(picture)
+		pictures.append(picture)
+		picture_hashes.append("")
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.font_size = 40
 		label.modulate = Color("fff4d4")
@@ -51,6 +66,20 @@ func update_slots(value: Variant) -> void:
 		return
 	for i in range(6):
 		var item: Variant = value[i]
+		var encoded := ""
+		if typeof(item) == TYPE_DICTIONARY and item.get("coverPng") is String:
+			encoded = item.coverPng
+		if encoded != picture_hashes[i]:
+			picture_hashes[i] = encoded
+			pictures[i].visible = false
+			var pm := pictures[i].material_override as StandardMaterial3D
+			pm.albedo_texture = null
+			if encoded.begins_with("iVBORw0KGgo") and encoded.length() <= 350000 and encoded.length() % 4 == 0:
+				var bytes := Marshalls.base64_to_raw(encoded)
+				var image := Image.new()
+				if image.load_png_from_buffer(bytes) == OK and image.get_width() == 640 and image.get_height() == 360:
+					pm.albedo_texture = ImageTexture.create_from_image(image)
+					pictures[i].visible = true
 		if item == null:
 			occupied[i] = false
 			labels[i].text = "%02d" % (i + 1)

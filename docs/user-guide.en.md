@@ -28,3 +28,13 @@ Characters, shortcuts and nearby interactions open the same panels without waiti
 Legacy interactive works keep the original quiz, card and branching story data and export format. They are not automatically converted. The advanced workbench is optional.
 
 Bundled Node/npm and the pinned runtime start the app and static projects. Framework dependencies, model accounts and system tools depend on the project. The runtime requires macOS 13.5 or later; consult the open-project acceptance record for tested environments and cross-device limitations.
+
+## New source features (pending acceptance; absent from the 0.2.0 package)
+
+Inspiration now offers four playable static starters. Play one, then name and copy its real files into your own project. Copying does not call a model. Cancel the selection before copying; once accepted, copying finishes even if you leave, and the project remains with Shiye. Demo browser storage is not copied with source files.
+
+Project notes hold goals, decisions and tasks. Enabling context applies the saved revision to the next turn. Notes are user data, never permission changes, and disabling does not erase conversation history. Clear input and save to clear notes; compare the latest revision after a save conflict. Achievements freeze their notes, which can be explicitly included in source or static exports.
+
+Capture a preview or upload/paste a screenshot to add numbered text, crop, redact, undo/redo and zoom. Built-in capture requires Region Capture support and manual permission to share this tab; it can be cancelled. Frames are encoded only after successful preview cropping. Cancellation or failure saves no frame. Unsaved editing lasts for this visit; explicitly saved feedback drafts recover after restart and never auto-send. Text-only submission is the default. Attach an image only after confirming model image support; text feedback does not demonstrate image understanding.
+
+For historical screenshots, choose the current project or restore a separate copy first. Covers require a verifiable static saved-version preview, origin checks around capture and user confirmation. Node previews, unsupported capture and failed origin checks retain file icons. Replace, swap or remove references in six gallery slots without changing immutable achievements. Actual model image input, system-browser capture compatibility and the new desktop package remain unverified.
