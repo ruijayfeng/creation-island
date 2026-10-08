@@ -61,4 +61,17 @@ corepack yarn check:doc-i18n
 - 没有公网部署、跨项目队列、多设备同步或任意技术栈成功保证。静态构建只验证构建和 HTTP 可访问，功能仍需逐项操作。
 - 外部进程修改文件时通过双次清单校验拒绝不一致；无法阻止应用外程序继续修改当前项目。快照始终只引用已保存的不可变对象。
 
-最终桌面 ZIP、源码提交、独立解压验证和摘要在本记录交付段补充；未完成前不宣称最终包已验收。
+## 已验收交付物
+
+- 版本：0.2.0 Apple Silicon 开发候选包。
+- 源码提交：`1f381b51e27521e4287297e7aac11e750fae5fda`；包内 BUILD.json 一致。
+- ZIP：`dist/desktop-darwin-1791448258024/creation-island-darwin-arm64.zip`。
+- SHA-256：`83aa7281562c3b2cf388d6870e662f973089b76d9f6a201c216a45510f4c7942`，同目录 SHA256SUMS.txt。
+- 独立解压验证目录：`tmp/desktop-0.2.0-final/app`，与打包来源目录分开。
+- 最终包的启动、单实例、退出进程清理、fs-ext/koffi/node-pty、旧三类作品回归通过；随包 npm 11.19.0 可运行。
+- 最终包使用独立数据目录，再次运行十项新项目 API 场景（包含真实 npm 安装/构建/HTTP 和静态导出），全部通过。
+- 最终包中实际调用模型创建计数器，经岛内预览点击、保存、第一展位、HTML 下载，并用 file:// 独立打开验证点击。证据为 `final-package-preview.png`、`final-export-offline.png` 及同目录脱敏文字记录。
+- 对最终包再次运行真实模型后台取消回归，停止后等待超过原延迟，无迟到文件。
+- 包中未发现应用 settings.yaml、.credentials.yaml、browser-url.txt 或 open-projects/state.json。固定 vendor 0.1.3-alpha.1 校验通过。
+
+本轮验收服务已退出，未触碰用户原服务。上述最终包可自行启动；跨设备和签名、公证仍按限制保留。
