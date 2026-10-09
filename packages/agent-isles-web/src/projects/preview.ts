@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { resolve, extname, dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { safePath } from './files.js'
+import { atomic, safePath } from './files.js'
 
 export interface Preview { id: string; projectId: string; versionId?: string; kind?:'static'|'node'; state: 'starting'|'ready'|'failed'|'stopped'; url?: string; command: string; log: string; startedAt: number }
 export interface Recipe { kind: 'static'|'node'; command: string; script?: string; directory: string }
@@ -22,6 +22,38 @@ export async function recipes(root: string): Promise<Recipe[]> {
 export class Previews {
   records = new Map<string, Preview>()
   private owned = new Map<string, { server?: Server; child?: ChildProcess }>()
+  private origins?: Promise<Record<string,number>>
+  constructor(private originStore?:string) {}
+  private async reservePort(projectId:string,recipe:Recipe,versionId?:string) {
+    if(!this.origins)this.origins=(async()=>{
+      if(!this.originStore)return {}
+      try {
+        const data=JSON.parse(await readFile(this.originStore,'utf8'))
+        if(data.version!==1||!data.ports||typeof data.ports!=='object'||Array.isArray(data.ports))throw new Error('storage')
+        const values=Object.values(data.ports)
+        if(values.some(p=>!Number.isInteger(p)||(p as number)<1024||(p as number)>65535)||new Set(values).size!==values.length)throw new Error('storage')
+        return data.ports as Record<string,number>
+      } catch(error) {if((error as NodeJS.ErrnoException).code==='ENOENT')return {};throw error}
+    })()
+    const ports=await this.origins
+    // The origin owns browser storage. Keep current files, recipes and saved versions separate.
+    const key=JSON.stringify([projectId,versionId??null,recipe.kind,recipe.directory,recipe.script??null])
+    const previous=ports[key]
+    for(let attempt=0;attempt<20;attempt++) {
+      const reservation=createServer()
+      try {
+        await new Promise<void>((done,reject)=>{reservation.once('error',reject);reservation.listen(previous??0,'127.0.0.1',done)})
+        const port=(reservation.address() as {port:number}).port
+        if(!previous&&Object.values(ports).includes(port))continue
+        if(!previous){await (this.originStore?atomic(this.originStore,{version:1,ports:{...ports,[key]:port}}):Promise.resolve());ports[key]=port}
+        return port
+      } catch(error) {
+        if(previous&&(error as NodeJS.ErrnoException).code==='EADDRINUSE')throw new Error('preview-origin-busy')
+        throw error
+      } finally {if(reservation.listening)await new Promise<void>(done=>reservation.close(()=>done()))}
+    }
+    throw new Error('preview-origin-busy')
+  }
   async stop(id: string) {
     const owned = this.owned.get(id), record = this.records.get(id)
     if (record) record.state = 'stopped'
@@ -40,10 +72,7 @@ export class Previews {
     const record: Preview = { id: randomUUID(), projectId, versionId, kind:recipe.kind, state:'starting', command:recipe.command, log:'', startedAt: Date.now() }
     this.records.set(record.id, record)
     try {
-    const portServer = createServer()
-    await new Promise<void>((done, reject) => { portServer.once('error', reject); portServer.listen(0, '127.0.0.1', done) })
-    const port = (portServer.address() as {port:number}).port
-    await new Promise<void>(done => portServer.close(() => done()))
+    const port = await this.reservePort(projectId,recipe,versionId)
     const url = `http://localhost:${port}/`
     if (recipe.kind === 'static') {
       const base = await safePath(root, recipe.directory || '.')

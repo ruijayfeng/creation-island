@@ -84,6 +84,7 @@ const words = {
 export type Word = keyof typeof words
 export const translator = (en:boolean) => (key:Word) => words[key][en?1:0]
 const errors:Record<string,[string,string]> = {
+ 'preview-origin-busy':['此预览原来的本机地址已被占用，请关闭占用该地址的程序后重试。为保留浏览器数据，没有自动更换地址。','This preview’s local address is occupied. Close the program using it and retry. The address was kept to preserve browser data.'],
  'notes-invalid':['项目记录超出条目或长度限制。','Project notes exceed the item or length limits.'], 'notes-limit':['项目记录过长，请整理后保存。','Project notes are too long; condense them before saving.'], 'starter':['找不到此示例。','Starter not found.'], 'starter-corrupt':['示例文件校验失败，请修复应用资源。','Starter integrity check failed. Repair app resources.'], 'invalid-media':['图像格式或大小不符合要求。','Image format or dimensions exceed limits.'], 'feedback-invalid':['标注或反馈超出限制。','Annotations or feedback exceed limits.'], 'source-changed':['预览来源已变化，请重新拍摄。','Preview source changed. Capture again.'], 'session':['反馈不属于此项目会话。','Feedback does not belong to this project conversation.'],
  'sensitive-export':['检测到疑似凭据，导出已停止。请删除凭据后重新保存成果。','Potential credentials detected. Export stopped. Remove credentials and save a new version.'],
  'build-required':['请先成功构建此保存版本。','Build this saved version successfully first.'],

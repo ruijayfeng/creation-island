@@ -15,7 +15,7 @@ import { capturePreview, confirmStaticPreview } from './capture.js'
 import { mediaUrl } from './api.js'
 import { NotesPanel } from './NotesPanel.js'
 import { StartersPanel } from './StartersPanel.js'
-import type { GrowthMetadata } from '../../projects/metadata.js'
+import type { FeedbackDraft, GrowthMetadata } from '../../projects/metadata.js'
 import type { ProjectNotes } from '../../projects/notes.js'
 import { islandStyles } from './styles.js'
 import type { Achievement, Run } from '../../projects/service.js'
@@ -35,11 +35,11 @@ export function IslandApp(props:Props) {
   const [welcomeHidden,setWelcomeHidden]=useState(storage('ci-island-welcome-hidden')==='true')
   const [mapOpen,setMapOpen]=useState(false),[previewChat,setPreviewChat]=useState(false),[viewportWidth,setViewportWidth]=useState(window.innerWidth)
   const [focus,setFocus]=useState(false),[light,setLight]=useState(storage('ci-light')==='true'),[reduced,setReduced]=useState(storage('ci-reduced',String(matchMedia('(prefers-reduced-motion: reduce)').matches))==='true')
-  const [previewEpoch,setPreviewEpoch]=useState(0),[ready,setReady]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[restored,setRestored]=useState(false)
+  const [previewEpoch,setPreviewEpoch]=useState(0),[worldGeneration,setWorldGeneration]=useState(0),[error,setError]=useState(''),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[restored,setRestored]=useState(false)
   const [title,setTitle]=useState(''),[idea,setIdea]=useState(storage('ci-new-idea')),[existingPath,setExistingPath]=useState(''),[parent,setParent]=useState<string>(),[note,setNote]=useState(''),[version,setVersion]=useState<string>(),[versionRecipes,setVersionRecipes]=useState<Recipe[]>([])
   const [includeNotes,setIncludeNotes]=useState(false),[captureInput,setCaptureInput]=useState<CaptureInput>(),[coverImages,setCoverImages]=useState<Record<string,string>>({})
   const previewArea=useRef<HTMLDivElement>(null),previewFrame=useRef<HTMLIFrameElement>(null),editorMemory=useRef(new Map<string,EditorMemory>()),notesMemory=useRef(new Map<string,ProjectNotes>()),capturing=useRef(false),captureController=useRef<AbortController>()
-  const [captureWorking,setCaptureWorking]=useState(false)
+  const [captureWorking,setCaptureWorking]=useState(false),[,editorAcknowledged]=useState(0)
   const [filePath,setFilePath]=useState(''),[file,setFile]=useState<any>(),[changes,setChanges]=useState<any>(),[search,setSearch]=useState('')
   const mapControl=useRef<HTMLDivElement>(null),frame=useRef<HTMLIFrameElement>(null),aside=useRef<HTMLElement>(null),lastTrigger=useRef<HTMLElement|null>(null),selectedRef=useRef(projectId),panelRef=useRef(panel)
   selectedRef.current=projectId;panelRef.current=panel
@@ -104,7 +104,8 @@ export function IslandApp(props:Props) {
   useEffect(()=>{
     const listener=(event:MessageEvent)=>{
       if(event.source!==frame.current?.contentWindow||event.origin!==location.origin||!isWorldToHostMessage(event.data))return
-      if(event.data.type==='world:ready'||event.data.type==='world:playable')setReady(true)
+      // Each new iframe must receive state even when the project has not changed.
+      if(event.data.type==='world:ready'||event.data.type==='world:playable')setWorldGeneration(n=>n+1)
       if(event.data.type==='resident:selected'){const map:Record<ResidentId,Panel>={coder:'chat',teacher:'projects',file_keeper:'delivery',coordinator:'inspiration'};show(map[event.data.payload.residentId])}
       if(event.data.type==='showcase:selected'){setVersion(data?.slots[event.data.payload.slot]??undefined);show('versions')}
     };window.addEventListener('message',listener);return()=>window.removeEventListener('message',listener)
@@ -116,8 +117,8 @@ export function IslandApp(props:Props) {
   const encounter=['projects','draft','help'].includes(panel??'')||(panel==='chat'&&!current)
   const attentionTarget=panel==='inspiration'?'coordinator':['projects','notes'].includes(panel??'')?'teacher':['delivery','files','changes'].includes(panel??'')?'file_keeper':panel==='versions'?'showcase':'coder'
   const worldState=JSON.stringify({locale:en?'en':'zh',workspace:current?{workspaceId:current.workspaceId,title:current.title}:null,sessionId:activeSession??null,panelOpen:!!panel||modelSettings,residents,reducedMotion:reduced,attention:panel&&panel!=='help'?{target:attentionTarget,layout:focus?'focus':encounter?'encounter':'side',sideRatio:Math.min(.85,(panel==='preview'?Math.min(960,viewportWidth*.68):panel==='feedback'?Math.min(800,viewportWidth*.58):Math.min(480,viewportWidth*.4))/viewportWidth)}:null})
-  useEffect(()=>{if(ready)frame.current?.contentWindow?.postMessage({source:'agent-isles-host',version:WORLD_BRIDGE_VERSION,type:'world:init',payload:JSON.parse(worldState)},location.origin)},[ready,worldState])
-  useEffect(()=>{if(ready)frame.current?.contentWindow?.postMessage({source:'agent-isles-host',version:WORLD_BRIDGE_VERSION,type:'project:showcase',payload:(data?.slots??Array(6).fill(null)).map(id=>{const a=data?.achievements.find(a=>a.id===id);return a?{versionId:a.id,title:a.title,coverPng:coverImages[a.id]?.split(',')[1]}:null})},location.origin)},[ready,data?.revision,projectId,JSON.stringify(coverImages)])
+  useEffect(()=>{if(worldGeneration&&!light)frame.current?.contentWindow?.postMessage({source:'agent-isles-host',version:WORLD_BRIDGE_VERSION,type:'world:init',payload:JSON.parse(worldState)},location.origin)},[worldGeneration,worldState,light])
+  useEffect(()=>{if(worldGeneration&&!light)frame.current?.contentWindow?.postMessage({source:'agent-isles-host',version:WORLD_BRIDGE_VERSION,type:'project:showcase',payload:(data?.slots??Array(6).fill(null)).map(id=>{const a=data?.achievements.find(a=>a.id===id);return a?{versionId:a.id,title:a.title,coverPng:coverImages[a.id]?.split(',')[1]}:null})},location.origin)},[worldGeneration,data?.revision,projectId,JSON.stringify(coverImages),light])
   useEffect(()=>{let active=true;setFile(undefined);if(panel==='files'&&projectId)void api('files',projectId,{path:filePath}).then(v=>{if(active)setFile(v)}).catch(e=>{if(active)setError(errorText(e,en))});return()=>{active=false}},[panel,projectId,filePath])
   useEffect(()=>{let active=true;setChanges(undefined);if(['changes','delivery'].includes(panel??'')&&projectId)void api('changes',projectId).then(v=>{if(active)setChanges(v)}).catch(e=>{if(active)setError(errorText(e,en))});return()=>{active=false}},[panel,projectId,lastRun?.state])
   useEffect(()=>{let active=true;setVersionRecipes([]);if(version&&projectId)void api<Recipe[]>('version-recipes',projectId,{version}).then(v=>{if(active)setVersionRecipes(v)}).catch(e=>{if(active)setError(errorText(e,en))});return()=>{active=false}},[version,projectId])
@@ -142,6 +143,12 @@ export function IslandApp(props:Props) {
     setCaptureInput({dataUrl,source:'preview',previewId:before,versionId:version,cover,capturedAt:Date.now()});show('feedback')
   }
   async function captureAction(cover=false){if(capturing.current)return;capturing.current=true;const controller=new AbortController();captureController.current=controller;setCaptureWorking(true);setError('');try{await capture(cover,controller.signal)}catch(e){setError(errorText(controller.signal.aborted?'captureCancelled':e,en))}finally{capturing.current=false;setCaptureWorking(false)}}
+  function acknowledgeFeedback(key:string,draft:FeedbackDraft,base:string,origin?:CaptureInput){
+    const latest=editorMemory.current.get(key)
+    if(!latest||draft.revision<latest.revision)return
+    editorMemory.current.set(key,{...latest,revision:draft.revision,requestId:draft.requestId,delivery:draft.delivery,captureId:latest.base===base?draft.captureId:undefined,origin:latest.base===base?(origin??latest.origin):latest.origin})
+    editorAcknowledged(n=>n+1)
+  }
   async function create(){
     const from=selectedRef.current,fromPanel=panelRef.current
     const result=await command({op:'create',title:title.trim()||idea.trim().split('\n')[0]!.slice(0,40),parent});await props.refreshProjects?.(result.id);setProjectIdeas(old=>({...old,[result.id]:idea}));setIdea('');if(selectedRef.current===from&&panelRef.current===fromPanel){setProjectId(result.id);setPanel('chat')}else setNotice(t('projectCreated'))
@@ -238,9 +245,9 @@ export function IslandApp(props:Props) {
 
               <details><summary>{t('annotate')}</summary><p>{t('screenshotHelp')}</p><div className="ci-actions">{captureWorking&&<button onClick={()=>captureController.current?.abort()}>{t('cancelCapture')}</button>}<button disabled={busy||captureWorking} onClick={()=>void captureAction()}>{t('capture')}</button><button onClick={()=>{setCaptureInput(undefined);show('feedback')}}>{t('uploadScreenshot')}</button>{a&&<button disabled={busy||captureWorking||preview.kind!=='static'} onClick={()=>void captureAction(true)}>{t('takeCover')}</button>}</div></details>
               <details className="ci-secondary"><summary>{t('runDetails')}</summary>{launchers}<pre className="ci-code">{preview.log}</pre><button onClick={()=>void act(async()=>command({op:'stop-preview',projectId,previewId:preview.id}))}>{t('stopPreview')}</button></details>
-            </>:<><p className="ci-dialogue-line">{t('previewWelcome')}</p>{preview&&<p role="status">{t(preview.state as 'starting'|'failed'|'stopped')}</p>}{busy&&<p role="status">{t('starting')}</p>}{launchers}{!recipes.length&&<p>{t('noRecipe')}</p>}{preview?.state==='failed'&&<pre className="ci-code">{preview.log}</pre>}<button onClick={()=>show('chat')}>{t('continueAqi')}</button></>}
+            </>:<><p className="ci-dialogue-line">{t('previewWelcome')}</p>{preview&&<p role="status">{t(preview.state as 'starting'|'failed'|'stopped')}</p>}{busy&&<p role="status">{t('starting')}</p>}{launchers}{!recipes.length&&<p>{t('noRecipe')}</p>}{preview?.state==='failed'&&<pre className="ci-code">{errorText(preview.log,en)}</pre>}<button onClick={()=>show('chat')}>{t('continueAqi')}</button></>}
           </>}
-          {panel==='feedback'&&data&&bindingId&&props.sendProjectFeedback&&<FeedbackPanel key={`${projectId}-${bindingId}-${captureInput?.previewId??'draft'}-${captureInput?.cover??false}`} projectId={data.id} sessionId={bindingId} en={en} input={captureInput} memory={editorMemory.current.get(`${data.id}:${bindingId}`)} remember={value=>editorMemory.current.set(`${data.id}:${bindingId}`,value)} saved={data.feedback[bindingId]} captures={data.captures} coverRevision={data.covers[captureInput?.versionId??editorMemory.current.get(`${data.id}:${bindingId}`)?.origin?.versionId??'']?.revision??0} busy={!!data.active} send={props.sendProjectFeedback} refresh={()=>refresh(data.id)} done={()=>{const cover=captureInput?.cover??editorMemory.current.get(`${data.id}:${bindingId}`)?.origin?.cover;editorMemory.current.delete(`${data.id}:${bindingId}`);if(selectedRef.current===data.id&&panelRef.current==='feedback'){setCaptureInput(undefined);show(cover?'versions':'chat')}}} restore={async versionId=>{const p=await command({op:'restore',projectId,versionId});await props.refreshProjects?.(p.id);if(selectedRef.current===data.id&&panelRef.current==='feedback'){setProjectId(p.id);show('chat')}}}/>}
+          {panel==='feedback'&&data&&bindingId&&props.sendProjectFeedback&&<FeedbackPanel key={`${projectId}-${bindingId}-${captureInput?.previewId??'draft'}-${captureInput?.cover??false}`} projectId={data.id} sessionId={bindingId} en={en} input={captureInput} memory={editorMemory.current.get(`${data.id}:${bindingId}`)} remember={value=>{editorMemory.current.set(`${data.id}:${bindingId}`,value)}} acknowledge={(draft,base,origin)=>acknowledgeFeedback(`${data.id}:${bindingId}`,draft,base,origin)} saved={data.feedback[bindingId]} captures={data.captures} coverRevision={data.covers[captureInput?.versionId??editorMemory.current.get(`${data.id}:${bindingId}`)?.origin?.versionId??'']?.revision??0} busy={!!data.active} send={props.sendProjectFeedback} refresh={()=>refresh(data.id)} done={()=>{const cover=captureInput?.cover??editorMemory.current.get(`${data.id}:${bindingId}`)?.origin?.cover;editorMemory.current.delete(`${data.id}:${bindingId}`);if(selectedRef.current===data.id&&panelRef.current==='feedback'){setCaptureInput(undefined);show(cover?'versions':'chat')}}} restore={async versionId=>{const p=await command({op:'restore',projectId,versionId});await props.refreshProjects?.(p.id);if(selectedRef.current===data.id&&panelRef.current==='feedback'){setProjectId(p.id);show('chat')}}}/>}
           {panel==='versions'&&data&&<>
             {a?<article className="ci-saved-work">{coverImages[a.id]?<img className="ci-cover" src={coverImages[a.id]} alt={a.title}/>:<div className="ci-version-icon">{t('fileIcon')}</div>}<h2>{a.title}</h2><p className="ci-muted">{t('savedIdentity')} {new Date(a.createdAt).toLocaleString()} · {a.id.slice(0,8)}</p><p>{a.note}</p>
               <div className="ci-actions"><button className="ci-primary" onClick={()=>{setPreviewChat(false);show('preview')}}>{t('tryWork')}</button><button onClick={()=>show('delivery')}>{t('handoff')}</button></div>

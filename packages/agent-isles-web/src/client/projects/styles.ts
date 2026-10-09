@@ -14,7 +14,7 @@ export const islandStyles = `
 .ci-top{position:absolute;inset:20px 24px auto;display:flex;gap:8px;justify-content:space-between;align-items:flex-start;z-index:6;pointer-events:none}
 .ci-top>div{display:flex;gap:8px;min-width:0;flex-wrap:wrap}.ci-top button{pointer-events:auto;box-shadow:0 3px 14px #17392c18;max-width:55vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #ffffff66;background:#234d41ee;color:#fffdf1}
 .ci-top button:hover{background:#306351}.ci-project-chip span{margin-right:8px;color:#ebc995}
-.ci-top .ci-task-chip{font-size:12px;display:flex;align-items:center;gap:7px;background:#fffdf1ed;color:#354c40}.ci-task-chip i{width:7px;height:7px;border-radius:50%;background:#7d9274;flex:none}.ci-task-chip.needs-input i{background:#c86b42}
+.ci-top .ci-task-chip{font-size:12px;display:flex;align-items:center;gap:7px;background:#fffdf1ed;color:#354c40}.ci-top .ci-task-chip:hover{background:#edf1e6}.ci-task-chip i{width:7px;height:7px;border-radius:50%;background:#7d9274;flex:none}.ci-task-chip.needs-input i{background:#c86b42}
 .ci-map-control{position:absolute;right:24px;bottom:22px;z-index:26}.ci-map-control>button{box-shadow:0 4px 20px #17392c22;background:#fffdf1f5;border-color:#ffffff88;border-radius:24px}
 .ci-map{position:absolute;right:0;bottom:52px;width:284px;max-width:calc(100vw - 32px);padding:18px;background:#fffdf4;border:1px solid #b8c7b6;border-radius:16px;box-shadow:0 12px 48px #17392c33}
 .ci-map p{margin:5px 0 12px}.ci-map button{display:block;text-align:left;width:100%;border:0;border-radius:6px;margin:2px 0}.ci-map button span,.ci-map button small{display:block}.ci-map button small{font-size:12px;color:#687a65}
