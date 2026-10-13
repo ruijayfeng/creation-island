@@ -1,4 +1,4 @@
-# 创作岛 0.2.0 桌面候选包
+# 创作岛 0.3.0 桌面候选包
 
 当前目标为 macOS Apple Silicon。先构建 Web 和世界，再运行 `corepack yarn build:desktop:darwin`。对 ZIP 独立解压目录执行 `bash apps/desktop/verify-darwin.sh <解压目录>`，并使用独立数据目录检查新项目主流程。Node/npm 来自校验 SHA-256 的同一官方归档。
 

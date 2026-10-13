@@ -133,9 +133,8 @@ export function IslandApp(props:Props) {
     if(!previewArea.current||!preview||preview.state!=='ready')return
     if(bindingId&&data?.feedback[bindingId]?.requestId)throw new Error('unknownSubmission')
     const before=preview.id,id=projectId
-    if(cover){if(!previewFrame.current)throw new Error('source-changed');await confirmStaticPreview(previewFrame.current,preview)}
-    const dataUrl=await capturePreview(previewArea.current,signal)
-    if(cover){if(!previewFrame.current)throw new Error('source-changed');await confirmStaticPreview(previewFrame.current,preview)}
+    const verify=cover?async()=>{if(!previewFrame.current)throw new Error('source-changed');await confirmStaticPreview(previewFrame.current,preview)}:undefined
+    const dataUrl=await capturePreview(previewArea.current,signal,{hint:t('captureHint'),cancel:t('cancelCapture')},verify)
     const latest=await api<ProjectData>('state',id)
     signal?.throwIfAborted()
     if(selectedRef.current!==id||latest.previews.find(p=>p.id===before)?.state!=='ready')throw new Error('source-changed')

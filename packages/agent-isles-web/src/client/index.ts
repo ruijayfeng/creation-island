@@ -224,6 +224,10 @@ export function apply(ctx: Omit<ClientContext, 'sessions' | 'connection'> & { se
           const status=await fetch('/creation/projects/status',{headers:{'x-creation-projects':'1'}}).then(r=>r.json())
           if(status.active||Object.values(ctx.sessions.list.getSnapshot().byId).some(s=>s.running))throw new Error('busy')
           const binding=ctx.sessions.binding(sessionId as SessionId);if(!binding)throw new Error('session')
+          if(image){
+            const capability=await fetch(`/creation/projects/image-model?${new URLSearchParams({project:projectId,session:sessionId})}`,{headers:{'x-creation-projects':'1'}}).then(r=>r.ok?r.json():Promise.reject(new Error('imageHint')))
+            if(!capability.image)throw new Error('imageHint')
+          }
           // Preserve the actual model chosen in this native conversation.
           // In particular, never replace an image-capable selection with the
           // global default after the user has confirmed image support.

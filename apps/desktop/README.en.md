@@ -1,4 +1,4 @@
-# Creation Island 0.2.0 desktop candidate
+# Creation Island 0.3.0 desktop candidate
 
 The current target is macOS Apple Silicon. Build Web and world assets, then run `corepack yarn build:desktop:darwin`. Independently extract the ZIP and run `bash apps/desktop/verify-darwin.sh <extracted directory>`, followed by new-project workflow checks with isolated app data. Node/npm come from the same official archive with verified SHA-256.
 

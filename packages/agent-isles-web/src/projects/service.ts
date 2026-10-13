@@ -1,6 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-jobs'
+import type {} from '@deepseek-ai/dsh-agent-default-model'
 import { stopOwnedJobs } from './jobs.js'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-host-webserver'
@@ -25,7 +26,7 @@ interface ProjectRecord extends GrowthMetadata { revision: number; achievements:
 interface Build { projectId:string; versionId:string; directory:string; manifest:Manifest; log:string; createdAt:number }
 interface State { builds?:Record<string,Build>; version:1|2; projects: Record<string,ProjectRecord>; receipts: Record<string,{ fingerprint:string; result:unknown }> }
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[\w-]{1,160}$/.test(value) && !['__proto__','constructor','prototype'].includes(value)
-export const inject = ['workspaceRegistry','webServer','sessions','jobs','attachments']
+export const inject = ['workspaceRegistry','webServer','sessions','jobs','attachments','llm','agentDefaultModel']
 export function apply(ctx: Context) {
   ctx.inject(['systemPrompt'], c => c.effect(() => c.systemPrompt.section({ name:'creation-island:partner', order:50, text:'You are 阿启 (Aqi), the making partner in Creation Island. Work on real files in the current project using the available tools and actual permissions. Read existing files before editing. Do not claim a task result is verified without running checks. Never claim a URL is a verified preview: the host checks previews separately. User-confirmed saved achievements are separate from finishing a turn. Favor simple runnable Web projects for new ideas, retain existing project structure when editing. Do not run persistent preview servers yourself: provide a package.json dev/start script honoring PORT and HOST, or static index.html, for the host to run. Do not install dependencies or access outside the project by bypassing runtime approval. Shiye and Adu are local management interfaces, not additional agents. Respond in the user’s language.' }), 'creation-island persona'))
   const home = resolve(process.env.DSH_HOME ?? '.creation-island-home', 'open-projects')
@@ -342,6 +343,19 @@ export function apply(ctx: Context) {
       if(url.pathname.endsWith('/image-limits')){reply(200,ctx.attachments.imageLimits);return}
       project(id)
       if(url.pathname.endsWith('/media')){const bytes=await media.read(record(id).captures,url.searchParams.get('hash')??'');res.writeHead(200,{'content-type':'image/png','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(bytes);return}
+      if(url.pathname.endsWith('/image-model')){
+        const sessionId=url.searchParams.get('session')??''
+        if(!project(id).sessionIds.includes(sessionId as import('@deepseek-ai/dsh-session').SessionId))throw new Error('session')
+        const session=ctx.sessions.get(sessionId as import('@deepseek-ai/dsh-session').SessionId)
+        if(!session)throw new Error('session')
+        let selection:{provider:string;model:string}=ctx.agentDefaultModel.currentSelection()
+        for(const event of [...session.snapshotEvents()].reverse()){
+          if(event.type==='model/selection'){selection=event.data;break}
+          if(event.type==='request/header'){selection=event.data.header.config;break}
+        }
+        const model=await ctx.llm.resolveModelInfo(selection.provider,selection.model,AbortSignal.timeout(10000))
+        reply(200,{provider:selection.provider,model:selection.model,image:model.inputModalities?.includes('image')===true});return
+      }
       if(url.pathname.endsWith('/submission')){
         const sessionId=url.searchParams.get('session')??'',requestId=url.searchParams.get('request')??''
         if(!project(id).sessionIds.includes(sessionId as import('@deepseek-ai/dsh-session').SessionId))throw new Error('session')

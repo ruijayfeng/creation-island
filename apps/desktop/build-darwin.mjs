@@ -44,8 +44,8 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
   <key>CFBundleName</key><string>creation-island</string>
   <key>CFBundleDisplayName</key><string>Creation Island</string>
   <key>CFBundleIdentifier</key><string>com.jayfeng.creation-island</string>
-  <key>CFBundleVersion</key><string>0.2.0</string>
-  <key>CFBundleShortVersionString</key><string>0.2.0</string>
+  <key>CFBundleVersion</key><string>0.3.0</string>
+  <key>CFBundleShortVersionString</key><string>0.3.0</string>
   <key>CFBundleExecutable</key><string>creation-island</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleIconFile</key><string>creation-island.icns</string>
@@ -77,7 +77,7 @@ const compile = spawnSync(
 if (compile.status !== 0) throw new Error('Swift 启动器编译失败')
 chmodSync(binary, 0o755)
 
-writeFileSync(path.join(app, 'BUILD.json'), JSON.stringify({ product: 'Creation Island', version: '0.2.0', arch: process.arch, commit: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(), builtAt: new Date().toISOString() }, null, 2))
+writeFileSync(path.join(app, 'BUILD.json'), JSON.stringify({ product: 'Creation Island', version: '0.3.0', arch: process.arch, commit: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(), builtAt: new Date().toISOString() }, null, 2))
 const zip = path.join(out, 'creation-island-darwin-arm64.zip')
 const ditto = spawnSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', app, zip], { stdio: 'inherit' })
 if (ditto.status !== 0) {
